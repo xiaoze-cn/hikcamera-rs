@@ -120,22 +120,8 @@ fn copy_runtime(runtime_dll: &Path, out_dir: &Path) {
     };
 
     let runtime_dir = runtime_dll.parent().unwrap();
-    for entry in std::fs::read_dir(runtime_dir)
-        .unwrap_or_else(|err| panic!("failed to read {}: {err}", runtime_dir.display()))
-        .filter_map(Result::ok)
-    {
-        let source = entry.path();
-        if source.is_file() && is_runtime_file(&source) {
-            let target = profile_dir.join(source.file_name().unwrap());
-            std::fs::copy(&source, &target).unwrap_or_else(|err| {
-                panic!(
-                    "failed to copy {} to {}: {err}",
-                    source.display(),
-                    target.display()
-                )
-            });
-        }
-    }
+    copy_runtime_dir(runtime_dir, profile_dir);
+    copy_runtime_dir(&runtime_dir.join("ThirdParty"), profile_dir);
 }
 
 fn is_runtime_file(path: &Path) -> bool {
@@ -249,6 +235,29 @@ fn sdk_dirs() -> Vec<PathBuf> {
     }
 
     dirs
+}
+
+fn copy_runtime_dir(source_dir: &Path, profile_dir: &Path) {
+    if !source_dir.exists() {
+        return;
+    }
+
+    for entry in std::fs::read_dir(source_dir)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", source_dir.display()))
+        .filter_map(Result::ok)
+    {
+        let source = entry.path();
+        if source.is_file() && is_runtime_file(&source) {
+            let target = profile_dir.join(source.file_name().unwrap());
+            std::fs::copy(&source, &target).unwrap_or_else(|err| {
+                panic!(
+                    "failed to copy {} to {}: {err}",
+                    source.display(),
+                    target.display()
+                )
+            });
+        }
+    }
 }
 
 fn sdk_parts(version_dir: PathBuf) -> Vec<PathBuf> {

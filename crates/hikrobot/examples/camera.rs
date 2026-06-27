@@ -1,8 +1,16 @@
+use std::error::Error;
+use std::path::Path;
 use std::time::{Duration, Instant};
 
 use hikrobot::{Camera, HikRobot};
 
-fn main() -> hikrobot::Result<()> {
+const DATA_DIR: &str = "crates/hikrobot/examples/datas";
+const IMAGE_PATH: &str = "crates/hikrobot/examples/datas/image.bmp";
+const VIDEO_PATH: &str = "crates/hikrobot/examples/datas/video.avi";
+
+fn main() -> Result<(), Box<dyn Error>> {
+    std::fs::create_dir_all(DATA_DIR)?;
+
     let hik = HikRobot::new()?;
     let mut camera = camera(&hik)?;
 
@@ -41,7 +49,7 @@ fn take_image(camera: Camera<'_>) -> hikrobot::Result<Camera<'_>> {
     let timeout = Duration::from_secs(1);
 
     let frame = stream.take_frame(timeout)?;
-    let mut image = stream.save_image("capture.bmp")?;
+    let mut image = stream.save_image(Path::new(IMAGE_PATH))?;
     let image_path = image.path().to_owned();
     image.write_frame(&frame)?;
     image.finish()?;
@@ -58,7 +66,7 @@ fn take_image(camera: Camera<'_>) -> hikrobot::Result<Camera<'_>> {
 fn take_video(camera: Camera<'_>) -> hikrobot::Result<Camera<'_>> {
     let mut stream = camera.stream()?;
     let timeout = Duration::from_secs(1);
-    let mut video = stream.save_video("capture.avi", 30.0)?;
+    let mut video = stream.save_video(Path::new(VIDEO_PATH), 30.0)?;
     let started = Instant::now();
 
     while started.elapsed() < Duration::from_secs(10) {
