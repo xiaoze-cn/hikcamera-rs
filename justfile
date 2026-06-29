@@ -17,6 +17,12 @@ check: setup
 build: setup
     cargo build --workspace
 
+build-examples: setup
+    cargo build --workspace --examples
+
+test: setup
+    cargo test --workspace
+
 fmt-check:
     cargo fmt --all -- --check
 
