@@ -1,7 +1,7 @@
-use hikrobot::{Device, Devices, HikRobot};
+use hikcamera::{Device, Devices, HikCamera};
 
-fn main() -> hikrobot::Result<()> {
-    let hik = HikRobot::new()?;
+fn main() -> hikcamera::Result<()> {
+    let hik = HikCamera::new()?;
 
     let devices = devices(&hik)?;
 
@@ -12,10 +12,10 @@ fn main() -> hikrobot::Result<()> {
     Ok(())
 }
 
-fn devices(hik: &HikRobot) -> hikrobot::Result<Devices<'_>> {
+fn devices(hik: &HikCamera) -> hikcamera::Result<Devices<'_>> {
     let devices = hik.devices()?;
 
-    println!("HikRobot::devices()");
+    println!("HikCamera::devices()");
     println!("  count: {}", devices.len());
 
     Ok(devices)

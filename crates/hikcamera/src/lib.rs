@@ -12,5 +12,5 @@ pub use camera::{
 };
 pub use device::{Device, DeviceInfo, Devices, Transport};
 pub use error::{Error, ErrorInfo, Result};
-pub use hikrobot_sys as sys;
-pub use system::{HikRobot, HikVersion};
+pub use hikcamera_sys as sys;
+pub use system::{HikCamera, HikVersion};

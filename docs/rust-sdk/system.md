@@ -1,4 +1,4 @@
-﻿源码文件：`crates/hikrobot/src/system.rs`
+﻿源码文件：`crates/hikcamera/src/system.rs`
 
 这个文件负责 SDK 全局状态、SDK 版本和设备枚举入口。
 
@@ -13,7 +13,7 @@ MV_CC_EnumDevices
 
 ## 提供的结构体
 
-- `HikRobot`
+- `HikCamera`
   - Rust 高层 SDK 的入口状态
   - 创建时初始化海康 C SDK
   - 持有 SDK 已初始化这一层生命周期
@@ -23,13 +23,13 @@ MV_CC_EnumDevices
   - SDK 版本信息
   - 从 `MV_CC_GetSDKVersion` 的原始 `u32` 拆出来
 
-## HikRobot
+## HikCamera
 
-- `HikRobot::new()`
+- `HikCamera::new()`
   - 初始化海康 C SDK
-  - 成功后返回 `HikRobot`
+  - 成功后返回 `HikCamera`
   - 底层调用 `MV_CC_Initialize`
-  - 多个 `HikRobot` 实例共享同一个 SDK 全局初始化计数
+  - 多个 `HikCamera` 实例共享同一个 SDK 全局初始化计数
   - 只有第一个实例会真正初始化 SDK
 
 - `version()`
@@ -45,9 +45,9 @@ MV_CC_EnumDevices
   - 通过 `Devices` 继续查看设备信息、选择设备并打开相机
 
 - `Drop`
-  - `HikRobot` 离开作用域时自动调用
+  - `HikCamera` 离开作用域时自动调用
   - 会减少 SDK 全局初始化引用计数
-  - 最后一个 `HikRobot` 离开作用域时才调用 `MV_CC_Finalize`
+  - 最后一个 `HikCamera` 离开作用域时才调用 `MV_CC_Finalize`
 
 ## HikVersion
 
@@ -64,12 +64,12 @@ MV_CC_EnumDevices
 
 ## 生命周期位置
 
-- `HikRobot`
+- `HikCamera`
   - 对应 C SDK 的 `Initialize` 和 `Finalize`
   - 是最外层状态
 
 - `Device`
-  - 由 `HikRobot::devices()` 枚举出来
+  - 由 `HikCamera::devices()` 枚举出来
   - 只表示设备信息和设备可访问状态
 
 - `Camera`

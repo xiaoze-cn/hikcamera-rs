@@ -1,5 +1,5 @@
 [package]
-name = "hikrobot"
+name = "hikcamera-sys"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,6 +8,9 @@ repository.workspace = true
 readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
+links = "MvCameraControl"
 
 [dependencies]
-hikrobot-sys = { path = "../hikrobot-sys" }
+
+[build-dependencies]
+bindgen = "0.72"

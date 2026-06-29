@@ -7,19 +7,19 @@ use std::ptr::NonNull;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use crate::{Error, HikRobot, Result, error::check, sys};
+use crate::{Error, HikCamera, Result, error::check, sys};
 
 #[derive(Debug)]
 pub struct Camera<'hik> {
     inner: Option<Rc<CameraInner>>,
-    _hik: PhantomData<&'hik HikRobot>,
+    _hik: PhantomData<&'hik HikCamera>,
 }
 
 #[derive(Debug)]
 pub struct Stream<'hik> {
     inner: Option<Rc<CameraInner>>,
     recording: Rc<Cell<bool>>,
-    _hik: PhantomData<&'hik HikRobot>,
+    _hik: PhantomData<&'hik HikCamera>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -1,7 +1,7 @@
-use hikrobot::{Devices, HikRobot};
+use hikcamera::{Devices, HikCamera};
 
-fn main() -> hikrobot::Result<()> {
-    let hik = hik_robot()?;
+fn main() -> hikcamera::Result<()> {
+    let hik = hik_camera()?;
 
     version(&hik);
     devices(&hik)?;
@@ -9,19 +9,19 @@ fn main() -> hikrobot::Result<()> {
     Ok(())
 }
 
-fn hik_robot() -> hikrobot::Result<HikRobot> {
-    let hik = HikRobot::new()?;
+fn hik_camera() -> hikcamera::Result<HikCamera> {
+    let hik = HikCamera::new()?;
 
-    println!("HikRobot::new()");
+    println!("HikCamera::new()");
     println!("  initialized: true");
 
     Ok(hik)
 }
 
-fn version(hik: &HikRobot) {
+fn version(hik: &HikCamera) {
     let version = hik.version();
 
-    println!("HikRobot::version()");
+    println!("HikCamera::version()");
     println!("  major: {:?}", version.major);
     println!("  minor: {:?}", version.minor);
     println!("  patch: {:?}", version.patch);
@@ -29,10 +29,10 @@ fn version(hik: &HikRobot) {
     println!("  raw: {:?}", version.raw);
 }
 
-fn devices(hik: &HikRobot) -> hikrobot::Result<Devices<'_>> {
+fn devices(hik: &HikCamera) -> hikcamera::Result<Devices<'_>> {
     let devices = hik.devices()?;
 
-    println!("HikRobot::devices()");
+    println!("HikCamera::devices()");
     println!("  count: {:?}", devices.len());
 
     Ok(devices)

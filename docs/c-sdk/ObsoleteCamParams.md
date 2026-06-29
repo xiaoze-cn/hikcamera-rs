@@ -1,6 +1,6 @@
 # ObsoleteCamParams
 
-头文件：`crates/hikrobot-sys/includes/ObsoleteCamParams.h`
+头文件：`crates/hikcamera-sys/includes/ObsoleteCamParams.h`
 
 这个文件为 `MvObsoleteInterfaces.h` 里的旧接口提供配套结构体、枚举和宏
 

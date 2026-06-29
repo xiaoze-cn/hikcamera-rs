@@ -1,6 +1,6 @@
 # MvErrorDefine
 
-头文件：`crates/hikrobot-sys/includes/MvErrorDefine.h`
+头文件：`crates/hikcamera-sys/includes/MvErrorDefine.h`
 
 这个文件定义 MVS C SDK 主错误码
 

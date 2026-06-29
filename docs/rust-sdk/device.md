@@ -1,4 +1,4 @@
-﻿源码文件：`crates/hikrobot/src/device.rs`
+﻿源码文件：`crates/hikcamera/src/device.rs`
 
 这个文件负责设备状态和设备信息整理。
 
@@ -92,9 +92,9 @@ MV_CC_DEVICE_INFO
 
 ## 提供的函数
 
-## HikRobot 设备入口
+## HikCamera 设备入口
 
-- `HikRobot::devices()`
+- `HikCamera::devices()`
   - 枚举当前设备列表，返回 `Result<Devices>`
   - 当前枚举 `GigE + USB`
   - `DeviceInfo` 里保留了其他传输层的信息解析，供后续扩展专用枚举入口时复用

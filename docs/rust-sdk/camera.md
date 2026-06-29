@@ -1,6 +1,6 @@
 # camera
 
-源代码：`crates/hikrobot/src/camera.rs`
+源代码：`crates/hikcamera/src/camera.rs`
 
 这一层封装打开后的相机、采集流、帧数据、图片写入和视频写入。
 
@@ -120,10 +120,10 @@ MV_CC_StopRecord
 ```rust
 use std::time::Duration;
 
-use hikrobot::HikRobot;
+use hikcamera::HikCamera;
 
-fn main() -> hikrobot::Result<()> {
-    let hik = HikRobot::new()?;
+fn main() -> hikcamera::Result<()> {
+    let hik = HikCamera::new()?;
     let mut camera = hik.devices()?.default()?.open()?;
 
     camera.set_exposure(8000.0)?;

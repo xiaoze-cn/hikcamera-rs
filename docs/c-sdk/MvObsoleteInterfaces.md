@@ -1,6 +1,6 @@
 # MvObsoleteInterfaces
 
-头文件：`crates/hikrobot-sys/includes/MvObsoleteInterfaces.h`
+头文件：`crates/hikcamera-sys/includes/MvObsoleteInterfaces.h`
 
 这个文件放旧接口
 

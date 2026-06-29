@@ -6,7 +6,7 @@ use crate::{Camera, Device, Devices, Error, Result, error::check, sys};
 static SDK_REF_COUNT: Mutex<usize> = Mutex::new(0);
 
 #[derive(Debug)]
-pub struct HikRobot {
+pub struct HikCamera {
     _private: (),
 }
 
@@ -19,7 +19,7 @@ pub struct HikVersion {
     pub raw: u32,
 }
 
-impl HikRobot {
+impl HikCamera {
     pub fn new() -> Result<Self> {
         let mut users = SDK_REF_COUNT
             .lock()
@@ -62,7 +62,7 @@ impl HikRobot {
     }
 }
 
-impl Drop for HikRobot {
+impl Drop for HikCamera {
     fn drop(&mut self) {
         let Ok(mut users) = SDK_REF_COUNT.lock() else {
             return;

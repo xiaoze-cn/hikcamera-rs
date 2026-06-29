@@ -1,6 +1,6 @@
 # MvISPErrorDefine
 
-头文件：`crates/hikrobot-sys/includes/MvISPErrorDefine.h`
+头文件：`crates/hikcamera-sys/includes/MvISPErrorDefine.h`
 
 这个文件定义 ISP/算法处理相关错误码
 

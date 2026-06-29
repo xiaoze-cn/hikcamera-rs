@@ -1,29 +1,29 @@
-﻿# HikRobot
+﻿# HikCamera
 
-HikRobot MVS 相机 SDK 的 Rust 封装
+HikCamera MVS 相机 SDK 的 Rust 封装
 
-本项目基于 HikRobot MVS 5.0.1 Build 20260512（工业相机 SDK 4.8.0.3 Build 20260512）开发
+本项目基于 HikCamera MVS 5.0.1 Build 20260512（工业相机 SDK 4.8.0.3 Build 20260512）开发
 
-使用前需要安装 HikRobot MVS，并确保相机驱动和运行时环境可用
+使用前需要安装 HikCamera MVS，并确保相机驱动和运行时环境可用
 
 ## 安装
 
 ```toml
 [dependencies]
-hikrobot = { git = "https://github.com/xiaoze-cn/HikRobot-Rust.git" }
+hikcamera = { git = "https://github.com/xiaoze-cn/hikcamera-rs.git" }
 ```
 
 ## 示例
 
 ```rust
 use std::time::Duration;
-use hikrobot::{HikRobot, Rotation};
+use hikcamera::{HikCamera, Rotation};
 
 const IMAGE_PATH: &str = "image.bmp";
 const TIMEOUT: Duration = Duration::from_secs(1);
 
-fn main() -> hikrobot::Result<()> {
-    let hik = HikRobot::new()?;
+fn main() -> hikcamera::Result<()> {
+    let hik = HikCamera::new()?;
 
     let devices = hik.devices()?;
     let device = devices.default()?;
@@ -56,7 +56,7 @@ fn main() -> hikrobot::Result<()> {
 ## 项目结构
 
 ```text
-HikRobot/
+HikCamera/
 ├── Cargo.toml
 ├── Cargo.lock
 ├── README.md
@@ -64,7 +64,7 @@ HikRobot/
 │   ├── c-sdk
 │   └── rust-sdk
 └── crates/
-    ├── hikrobot/
+    ├── hikcamera/
     │   ├── Cargo.toml
     │   └── src/
     │       ├── lib.rs
@@ -72,7 +72,7 @@ HikRobot/
     │       ├── device.rs
     │       ├── error.rs
     │       └── system.rs
-    └── hikrobot-sys/
+    └── hikcamera-sys/
         ├── Cargo.toml
         ├── build.rs
         ├── MvCamera.h
@@ -94,4 +94,4 @@ HikRobot/
 
 ## 协议
 
-本项目中的 Rust 封装代码使用 MIT 协议，HikRobot MVS SDK 相关文件仍受其原始许可条款约束
+本项目中的 Rust 封装代码使用 MIT 协议，HikCamera MVS SDK 相关文件仍受其原始许可条款约束

@@ -6,8 +6,8 @@ fn main() {
     watch_env();
 
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let include_dir = manifest_dir.join("includes");
-    let header = manifest_dir.join("MvCamera.h");
+    let include_dir = manifest_dir.join("include");
+    let header = manifest_dir.join("wrapper.h");
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     println!("cargo:rerun-if-changed={}", header.display());
@@ -46,12 +46,12 @@ fn main() {
 
     assert!(
         import_lib.exists(),
-        "missing HikRobot import library: {}",
+        "missing HikCamera import library: {}",
         import_lib.display()
     );
     assert!(
         runtime_dll.exists(),
-        "missing HikRobot runtime DLL: {}",
+        "missing HikCamera runtime DLL: {}",
         runtime_dll.display()
     );
 
@@ -70,11 +70,11 @@ fn main() {
         .clang_args(include_args)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
-        .expect("failed to generate HikRobot MVS bindings");
+        .expect("failed to generate HikCamera MVS bindings");
 
     bindings
         .write_to_file(out_dir.join("bindings.rs"))
-        .expect("failed to write HikRobot MVS bindings");
+        .expect("failed to write HikCamera MVS bindings");
 
     copy_runtime(&runtime_dll, &out_dir);
 }
@@ -96,7 +96,7 @@ fn lib_dir(manifest_dir: &Path) -> PathBuf {
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     assert!(
         target_os == "windows",
-        "hikrobot-sys currently supports Windows targets only"
+        "hikcamera-sys currently supports Windows targets only"
     );
 
     let target_pointer_width = env::var("CARGO_CFG_TARGET_POINTER_WIDTH").unwrap();

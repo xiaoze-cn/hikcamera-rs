@@ -1,0 +1,32 @@
+# Default text handling
+* text=auto
+
+# Source and config files use LF
+*.rs text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+*.md text eol=lf
+*.h text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.gitignore text eol=lf
+.gitattributes text eol=lf
+justfile text eol=lf
+LICENSE text eol=lf
+
+# SDK/runtime artifacts are binary
+*.dll binary
+*.lib binary
+*.ax binary
+*.cti binary
+*.bmp binary
+*.avi binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary

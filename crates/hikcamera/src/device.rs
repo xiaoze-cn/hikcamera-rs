@@ -1,7 +1,7 @@
 use std::fmt;
 use std::mem::MaybeUninit;
 
-use crate::{Camera, Error, HikRobot, Result, error::check, sys};
+use crate::{Camera, Error, HikCamera, Result, error::check, sys};
 
 #[derive(Clone)]
 pub struct Devices<'hik> {
@@ -10,7 +10,7 @@ pub struct Devices<'hik> {
 
 #[derive(Clone)]
 pub struct Device<'hik> {
-    hik: &'hik HikRobot,
+    hik: &'hik HikCamera,
     raw: sys::MV_CC_DEVICE_INFO,
     info: DeviceInfo,
 }
@@ -102,7 +102,7 @@ pub struct UsbInfo {
 }
 
 impl<'hik> Devices<'hik> {
-    pub(crate) fn list(hik: &'hik HikRobot) -> Result<Self> {
+    pub(crate) fn list(hik: &'hik HikCamera) -> Result<Self> {
         let mut list = MaybeUninit::<sys::MV_CC_DEVICE_INFO_LIST>::zeroed();
         let types = sys::MV_GIGE_DEVICE | sys::MV_USB_DEVICE;
 
@@ -111,7 +111,7 @@ impl<'hik> Devices<'hik> {
         Ok(Self::from_raw_list(hik, unsafe { list.assume_init() }))
     }
 
-    fn from_raw_list(hik: &'hik HikRobot, list: sys::MV_CC_DEVICE_INFO_LIST) -> Self {
+    fn from_raw_list(hik: &'hik HikCamera, list: sys::MV_CC_DEVICE_INFO_LIST) -> Self {
         let count = list.nDeviceNum.min(list.pDeviceInfo.len() as u32) as usize;
         let items = list
             .pDeviceInfo
@@ -225,7 +225,7 @@ impl<'items, 'hik> IntoIterator for &'items Devices<'hik> {
 }
 
 impl<'hik> Device<'hik> {
-    fn from_raw(hik: &'hik HikRobot, raw: sys::MV_CC_DEVICE_INFO) -> Self {
+    fn from_raw(hik: &'hik HikCamera, raw: sys::MV_CC_DEVICE_INFO) -> Self {
         Self {
             hik,
             info: DeviceInfo::from_raw(&raw),

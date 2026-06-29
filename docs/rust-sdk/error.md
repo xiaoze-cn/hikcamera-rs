@@ -1,6 +1,6 @@
 # error
 
-源码文件：`crates/hikrobot/src/error.rs`
+源码文件：`crates/hikcamera/src/error.rs`
 
 这个文件负责统一 Rust 高层 SDK 的错误类型。
 
@@ -130,7 +130,7 @@ MvISPErrorDefine.h
 
 - `SDK_STATE_POISONED`
   - SDK 初始化/释放引用计数锁被 panic 污染时返回
-  - `HikRobot::new()` 会显式返回这个错误
+  - `HikCamera::new()` 会显式返回这个错误
 
 - `INVALID_STRING`
   - 路径、节点名或节点字符串包含 C 字符串不能表示的 NUL 字节时返回

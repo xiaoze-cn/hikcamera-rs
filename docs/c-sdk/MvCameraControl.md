@@ -1,8 +1,8 @@
 # MvCameraControl
 
-头文件：`crates/hikrobot-sys/includes/MvCameraControl.h`
+头文件：`crates/hikcamera-sys/includes/MvCameraControl.h`
 
-这是海康 MVS C SDK 的主入口头文件，`hikrobot-sys/MvCamera.h` 也是通过包含它来暴露 SDK
+这是海康 MVS C SDK 的主入口头文件，`hikcamera-sys/MvCamera.h` 也是通过包含它来暴露 SDK
 
 它本身继续包含：
 

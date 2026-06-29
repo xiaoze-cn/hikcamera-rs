@@ -2,16 +2,16 @@ use std::error::Error;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
-use hikrobot::{Camera, HikRobot};
+use hikcamera::{Camera, HikCamera};
 
-const DATA_DIR: &str = "crates/hikrobot/examples/datas";
-const IMAGE_PATH: &str = "crates/hikrobot/examples/datas/image.bmp";
-const VIDEO_PATH: &str = "crates/hikrobot/examples/datas/video.avi";
+const DATA_DIR: &str = "crates/hikcamera/examples/datas";
+const IMAGE_PATH: &str = "crates/hikcamera/examples/datas/image.bmp";
+const VIDEO_PATH: &str = "crates/hikcamera/examples/datas/video.avi";
 
 fn main() -> Result<(), Box<dyn Error>> {
     std::fs::create_dir_all(DATA_DIR)?;
 
-    let hik = HikRobot::new()?;
+    let hik = HikCamera::new()?;
     let mut camera = camera(&hik)?;
 
     configure(&mut camera)?;
@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn camera(hik: &HikRobot) -> hikrobot::Result<Camera<'_>> {
+fn camera(hik: &HikCamera) -> hikcamera::Result<Camera<'_>> {
     let camera = hik.devices()?.default()?.open()?;
 
     println!("Device::open()");
@@ -33,7 +33,7 @@ fn camera(hik: &HikRobot) -> hikrobot::Result<Camera<'_>> {
     Ok(camera)
 }
 
-fn configure(camera: &mut Camera<'_>) -> hikrobot::Result<()> {
+fn configure(camera: &mut Camera<'_>) -> hikcamera::Result<()> {
     camera.set_exposure(8000.0)?;
     camera.set_gain(3.0)?;
 
@@ -44,7 +44,7 @@ fn configure(camera: &mut Camera<'_>) -> hikrobot::Result<()> {
     Ok(())
 }
 
-fn take_image(camera: Camera<'_>) -> hikrobot::Result<Camera<'_>> {
+fn take_image(camera: Camera<'_>) -> hikcamera::Result<Camera<'_>> {
     let mut stream = camera.stream()?;
     let timeout = Duration::from_secs(1);
 
@@ -63,7 +63,7 @@ fn take_image(camera: Camera<'_>) -> hikrobot::Result<Camera<'_>> {
     stream.stop()
 }
 
-fn take_video(camera: Camera<'_>) -> hikrobot::Result<Camera<'_>> {
+fn take_video(camera: Camera<'_>) -> hikcamera::Result<Camera<'_>> {
     let mut stream = camera.stream()?;
     let timeout = Duration::from_secs(1);
     let mut video = stream.save_video(Path::new(VIDEO_PATH), 30.0)?;

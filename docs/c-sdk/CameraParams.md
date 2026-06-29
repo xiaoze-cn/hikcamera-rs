@@ -1,6 +1,6 @@
 # CameraParams
 
-头文件：`crates/hikrobot-sys/includes/CameraParams.h`
+头文件：`crates/hikcamera-sys/includes/CameraParams.h`
 
 这个文件不提供函数，主要提供 `MvCameraControl.h` 函数所需的结构体、枚举和宏定义
 

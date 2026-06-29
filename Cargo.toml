@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "crates/hikrobot",
-    "crates/hikrobot-sys",
+    "crates/hikcamera",
+    "crates/hikcamera-sys",
 ]
 resolver = "3"
 
@@ -9,8 +9,8 @@ resolver = "3"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
-description = "Rust wrapper for HikRobot MVS camera SDK"
-repository = "https://github.com/xiaoze-cn/HikRobot-Rust"
+description = "Rust wrapper for HikCamera MVS camera SDK"
+repository = "https://github.com/xiaoze-cn/hikcamera-rs"
 readme = "README.md"
-keywords = ["hikrobot", "mvs", "camera", "sdk"]
+keywords = ["hikcamera", "mvs", "camera", "sdk"]
 categories = ["api-bindings", "computer-vision"]

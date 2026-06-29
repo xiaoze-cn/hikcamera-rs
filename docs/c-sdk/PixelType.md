@@ -1,6 +1,6 @@
 # PixelType
 
-头文件：`crates/hikrobot-sys/includes/PixelType.h`
+头文件：`crates/hikcamera-sys/includes/PixelType.h`
 
 这个文件定义 `enum MvGvspPixelType`
 

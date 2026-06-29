@@ -156,19 +156,19 @@ impl Error {
     pub fn info(&self) -> ErrorInfo {
         match self {
             Self::Sdk { code } => sdk_error_info(*code as u32),
-            Self::NoDevice => info("NO_DEVICE", "No HikRobot device was found"),
+            Self::NoDevice => info("NO_DEVICE", "No HikCamera device was found"),
             Self::DeviceNotFound { .. } => info(
                 "DEVICE_NOT_FOUND",
-                "No HikRobot device matched the selector",
+                "No HikCamera device matched the selector",
             ),
             Self::MultipleDevices { .. } => info(
                 "MULTIPLE_DEVICES",
-                "Multiple HikRobot devices matched the selector",
+                "Multiple HikCamera devices matched the selector",
             ),
-            Self::NullHandle => info("NULL_HANDLE", "The HikRobot SDK returned a null handle"),
+            Self::NullHandle => info("NULL_HANDLE", "The HikCamera SDK returned a null handle"),
             Self::SdkStatePoisoned => info(
                 "SDK_STATE_POISONED",
-                "The HikRobot SDK reference counter is poisoned",
+                "The HikCamera SDK reference counter is poisoned",
             ),
             Self::InvalidString { .. } => {
                 info("INVALID_STRING", "String contains an interior NUL byte")
@@ -232,13 +232,13 @@ impl fmt::Display for Error {
             ),
             Self::NoDevice => write!(f, "{}", self.message()),
             Self::DeviceNotFound { selector } => {
-                write!(f, "no HikRobot device matched selector `{selector}`")
+                write!(f, "no HikCamera device matched selector `{selector}`")
             }
             Self::MultipleDevices { selector, count } => {
-                write!(f, "{count} HikRobot devices matched selector `{selector}`")
+                write!(f, "{count} HikCamera devices matched selector `{selector}`")
             }
-            Self::NullHandle => write!(f, "HikRobot SDK returned a null handle"),
-            Self::SdkStatePoisoned => write!(f, "HikRobot SDK reference counter is poisoned"),
+            Self::NullHandle => write!(f, "HikCamera SDK returned a null handle"),
+            Self::SdkStatePoisoned => write!(f, "HikCamera SDK reference counter is poisoned"),
             Self::InvalidString { field } => {
                 write!(f, "{field} contains an interior NUL byte")
             }
@@ -869,7 +869,7 @@ mod tests {
 
         assert_eq!(error.code(), None);
         assert_eq!(error.name(), "NO_DEVICE");
-        assert_eq!(error.message(), "No HikRobot device was found");
+        assert_eq!(error.message(), "No HikCamera device was found");
     }
 
     #[test]
@@ -892,11 +892,11 @@ mod tests {
         );
         assert_eq!(
             Error::null_handle().to_string(),
-            "HikRobot SDK returned a null handle"
+            "HikCamera SDK returned a null handle"
         );
         assert_eq!(
             Error::sdk_state_poisoned().to_string(),
-            "HikRobot SDK reference counter is poisoned"
+            "HikCamera SDK reference counter is poisoned"
         );
         assert_eq!(
             Error::unsupported_node("Root", "Category").to_string(),
