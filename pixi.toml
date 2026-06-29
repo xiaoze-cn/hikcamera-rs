@@ -5,3 +5,4 @@ platforms = ["win-64"]
 
 [dependencies]
 clangdev = "18.*"
+lefthook = "*"

@@ -17,9 +17,15 @@ check: setup
 build: setup
     cargo build --workspace
 
+fmt-check:
+    cargo fmt --all -- --check
+
+pre-commit: fmt-check check
+
 clean:
     cargo clean
 
 setup:
     pixi install
     test -f "{{ libclang_dll }}" || cp "{{ libclang_versioned_dll }}" "{{ libclang_dll }}"
+    lefthook install
