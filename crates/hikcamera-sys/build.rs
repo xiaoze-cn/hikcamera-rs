@@ -121,7 +121,6 @@ fn copy_runtime(runtime_dll: &Path, out_dir: &Path) {
 
     let runtime_dir = runtime_dll.parent().unwrap();
     copy_runtime_dir(runtime_dir, profile_dir);
-    copy_runtime_dir(&runtime_dir.join("ThirdParty"), profile_dir);
 }
 
 fn is_runtime_file(path: &Path) -> bool {
