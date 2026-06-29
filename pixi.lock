@@ -13,6 +13,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/clang-tools-18.1.8-default_hac490eb_18.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/clangdev-18.1.8-default_hac490eb_18.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/clangxx-18.1.8-default_hac490eb_18.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/lefthook-2.1.9-h11686cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/libclang-18.1.8-default_hac490eb_18.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/libclang-cpp-18.1.8-default_hac490eb_18.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/libclang13-18.1.8-default_ha2db4b5_18.conda
@@ -123,6 +124,13 @@ packages:
   license_family: Apache
   size: 64981372
   timestamp: 1773516492233
+- conda: https://conda.anaconda.org/conda-forge/win-64/lefthook-2.1.9-h11686cb_0.conda
+  sha256: b46014c4d379f16e178282b882c37e8f7acd0c1cd9207f386207ad6ddf023946
+  md5: 45eee6f9d039ca2283f4c0a164853905
+  license: MIT
+  license_family: MIT
+  size: 5448668
+  timestamp: 1780061059296
 - conda: https://conda.anaconda.org/conda-forge/win-64/libclang-18.1.8-default_hac490eb_18.conda
   sha256: 2963f1d410f92ebbef6b201fee54b1e6cef84f246135315d707e9689e7672e08
   md5: 3ef9436eccb7257201e0f43281672b3c
