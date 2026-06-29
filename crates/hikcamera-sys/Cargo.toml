@@ -10,6 +10,9 @@ keywords.workspace = true
 categories.workspace = true
 links = "MvCameraControl"
 
+[lib]
+doctest = false
+
 [dependencies]
 
 [build-dependencies]

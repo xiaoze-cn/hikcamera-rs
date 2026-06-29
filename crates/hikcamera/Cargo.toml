@@ -11,3 +11,6 @@ categories.workspace = true
 
 [dependencies]
 hikcamera-sys = { path = "../hikcamera-sys" }
+
+derive_more = { version = "2", features = ["from"] }
+thiserror = "2"

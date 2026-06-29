@@ -194,12 +194,15 @@ impl<'hik> Devices<'hik> {
     ) -> Result<Device<'hik>> {
         let mut matched = self.items.into_iter().filter(|device| matches(device));
         let Some(device) = matched.next() else {
-            return Err(Error::device_not_found(selector));
+            return Err(Error::DeviceNotFound { selector });
         };
 
         let extra = matched.count();
         if extra > 0 {
-            return Err(Error::multiple_devices(selector, extra + 1));
+            return Err(Error::MultipleDevices {
+                selector,
+                count: extra + 1,
+            });
         }
 
         Ok(device)

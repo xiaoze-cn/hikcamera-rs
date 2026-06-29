@@ -11,6 +11,6 @@ pub use camera::{
     VideoOptions, VideoWriter,
 };
 pub use device::{Device, DeviceInfo, Devices, Transport};
-pub use error::{Error, ErrorInfo, Result};
+pub use error::{Error, HikCameraError, Result, Status, StatusInfo};
 pub use hikcamera_sys as sys;
 pub use system::{HikCamera, HikVersion};

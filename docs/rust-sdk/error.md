@@ -20,10 +20,12 @@ MvISPErrorDefine.h
 
 - `Result<T>`
   - Rust 高层 SDK 统一使用的返回类型
-  - 等价于 `std::result::Result<T, Error>`
+  - 等价于 `std::result::Result<T, HikCameraError>`
 
-- `Error`
+- `HikCameraError`
   - Rust 高层 SDK 的统一错误类型
+  - 使用 `thiserror` 派生 `Display` 和 `std::error::Error`
+  - `Error` 是兼容旧用法的类型别名：`type Error = HikCameraError`
   - `Sdk { code }` 表示 C SDK 返回码错误
   - `NoDevice` 表示没有枚举到任何设备
   - `DeviceNotFound` 表示按指定条件没有找到设备
@@ -43,11 +45,15 @@ MvISPErrorDefine.h
   - `InvalidRoi` 表示 ROI 宽度或高度为 0
   - 标记为 `non_exhaustive`，后续可以继续增加封装层错误类型
 
-- `ErrorInfo`
-  - 错误翻译信息
-  - 保存错误名称和英文说明
+- `Status`
+  - C SDK 返回状态码的强类型封装
+  - `Status::info()` 返回 SDK 状态码名称和英文说明
   - SDK 错误使用 `MV_E_*`、`MV_ALG_*` 等 C SDK 名称
-  - Rust 封装层错误使用 `NO_DEVICE`、`DEVICE_NOT_FOUND` 等名称
+
+- `StatusInfo`
+  - SDK 状态码翻译信息
+  - 保存 SDK 状态码名称和英文说明
+  - 仅用于 `Status`，Rust 封装层错误直接使用 `thiserror` 的 `Display` 文案
 
 ## 提供的函数
 
@@ -56,18 +62,6 @@ MvISPErrorDefine.h
   - Rust 封装层错误返回 `None`
   - 用于日志、调试，或者对照海康官方文档
 
-- `Error::info()`
-  - 返回错误名称和英文说明
-  - 用于错误展示
-
-- `Error::name()`
-  - 返回错误名称
-  - 例如 `MV_E_NODATA`
-  - 封装层错误例如 `NO_DEVICE`
-
-- `Error::message()`
-  - 返回英文错误说明
-  - 代码里使用英文，避免中文在终端、日志或 CI 里出现编码问题
 
 ## 内部错误转换
 
@@ -98,6 +92,8 @@ MvISPErrorDefine.h
   - `recording_in_progress()`：创建重复录像错误
 
 ## Display 输出
+
+`Error` 的 `Display` 和 `std::error::Error` 实现由 `thiserror` 派生，输出内容保持为面向日志和调试的英文信息。
 
 - SDK 错误格式
   - `状态码名称 (十进制状态码, 十六进制状态码): 英文说明`

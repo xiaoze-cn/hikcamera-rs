@@ -21,9 +21,7 @@ pub struct HikVersion {
 
 impl HikCamera {
     pub fn new() -> Result<Self> {
-        let mut users = SDK_REF_COUNT
-            .lock()
-            .map_err(|_| Error::sdk_state_poisoned())?;
+        let mut users = SDK_REF_COUNT.lock().map_err(|_| Error::SdkStatePoisoned)?;
 
         if *users == 0 {
             check(unsafe { sys::MV_CC_Initialize() })?;
@@ -46,7 +44,7 @@ impl HikCamera {
         check(unsafe { sys::MV_CC_CreateHandle(&mut handle, device.raw()) })?;
 
         let Some(handle) = NonNull::new(handle.cast()) else {
-            return Err(Error::null_handle());
+            return Err(Error::NullHandle);
         };
 
         if let Err(error) =
