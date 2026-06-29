@@ -1,0 +1,33 @@
+set shell := ["sh", "-cu"]
+set working-directory := "."
+
+root := ".."
+pixi_bin := root + "/.pixi/envs/default/Library/bin"
+export PATH := pixi_bin + ";" + env_var("PATH")
+
+# Zed's integrated terminal (and MSYS/Git Bash environments) can leak a
+# Unix-style TEMP/TMP (e.g. `/tmp/zed-agent-terminal-XXXX`). Node's
+# `os.tmpdir()` then resolves to a bare drive letter (e.g. `D:`) and pnpm
+# crashes inside `realpathSync`. Force a Windows-style temp dir before any
+# pnpm/node invocation.
+export TEMP := "D:/tmp/hikcamera-site"
+export TMP := "D:/tmp/hikcamera-site"
+# pnpm otherwise prompts interactively when node_modules is stale.
+export CI := "true"
+
+install:
+    pnpm install
+
+dev:
+    pnpm run dev
+
+build:
+    pnpm run build
+
+check: build
+
+start:
+    pnpm run start
+
+clean:
+    rm -rf .astro dist node_modules

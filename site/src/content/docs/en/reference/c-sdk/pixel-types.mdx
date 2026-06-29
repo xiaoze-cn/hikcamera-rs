@@ -1,0 +1,51 @@
+---
+title: Pixel types
+description: Pixel format constants from PixelType.h used by frame and image APIs.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+`PixelType.h` defines the `MvGvspPixelType` enum and the related
+`PixelConvert`/`Mono`/`Color`/`Bayer` constants that flow through every
+frame-producing API in `MvCameraControl.h`. The Rust wrapper exposes them
+verbatim as `hikcamera::sys::MvGvspPixelType`.
+
+## Pixel type families
+
+<CardGrid>
+  <Card title="Mono" icon="seti:c">
+    `Mono8`, `Mono8_Signed`, `Mono10`, `Mono10_Packed`, `Mono12`,
+    `Mono12_Packed`, `Mono14`, `Mono16`, `Mono16_Signed`.
+  </Card>
+  <Card title="Color (packed, planar)" icon="seti:c">
+    `RGB8_Packed`, `RGB8_Planar`, `RGB10_Packed`, `RGB10_Planar`,
+    `RGB12_Packed`, `RGB14_Packed`, `RGB16_Packed`, plus the `BGR*`
+    mirror variants.
+  </Card>
+  <Card title="Bayer" icon="seti:c">
+    `BayerGR8`, `BayerRG8`, `BayerGB8`, `BayerBG8`, plus 10/12/16 variants.
+  </Card>
+  <Card title="YUV / YCoCg" icon="seti:c">
+    `YUV411_Packed`, `YUV422_Packed`, `YUV444_Packed`, `YCoCg_Planar`.
+  </Card>
+  <Card title="Compression" icon="seti:c">
+    `HB_Mono8`, `HB_RGB8`, plus the `MV_CC_HB_Decode` decode path.
+  </Card>
+  <Card title="Undefined / custom" icon="seti:c">
+    `PixelType_Undefined` and a catch-all that the wrapper preserves
+    bit-for-bit so downstream code can match vendor extensions.
+  </Card>
+</CardGrid>
+
+## Authoritative source
+
+<Aside type="note" title="Header is the source of truth">
+  For the full list of constants and their bit layouts, read the header
+  directly:
+  [`crates/hikcamera-sys/include/PixelType.h`](https://github.com/xiaoze-cn/hikcamera-rs/blob/main/crates/hikcamera-sys/include/PixelType.h).
+</Aside>
+
+## See also
+
+- Pixel-format conversion (`MV_CC_ConvertPixelTypeEx`) →
+  [Streaming](/guide/streaming/#frame-transformations).

@@ -1,0 +1,29 @@
+---
+title: Obsolete C interfaces
+description: Deprecated entry points from MvObsoleteInterfaces.h kept for bindgen compatibility.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`MvObsoleteInterfaces.h` collects entry points that the vendor has marked
+obsolete but are still declared for backward compatibility. The wrapper
+keeps them in `hikcamera::sys::*` purely so `bindgen` can produce complete
+bindings — they are **not** exposed through the safe `hikcamera` API and
+should not be relied on for new code.
+
+## Status
+
+- All functions here are deprecated upstream.
+- They are kept to avoid breaking `bindgen` output against older vendor
+  SDK versions.
+- They do **not** imply any additional runtime DLL beyond what
+  `MvCameraControl.dll` already loads.
+
+<Aside type="note" title="Authoritative source">
+  For the full list of deprecated entry points, read the header directly:
+  [`crates/hikcamera-sys/include/MvObsoleteInterfaces.h`](https://github.com/xiaoze-cn/hikcamera-rs/blob/main/crates/hikcamera-sys/include/MvObsoleteInterfaces.h).
+</Aside>
+
+## See also
+
+- Obsolete camera parameter macros → [Obsolete C params](/reference/c-sdk/obsolete-params/).

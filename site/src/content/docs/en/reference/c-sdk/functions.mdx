@@ -1,0 +1,105 @@
+---
+title: C SDK functions
+description: Overview of the function families declared in MvCameraControl.h.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+`MvCameraControl.h` is the main entry header of the HikCamera MVS C SDK.
+The Rust `hikcamera-sys` crate binds to it through `crates/hikcamera-sys/wrapper.h`,
+which is just a one-line include of this file.
+
+The safe wrapper in `hikcamera` does **not** expose every function here —
+only the subset needed for the public Rust API. The remaining functions are
+available through `hikcamera::sys::*` if you need them, but you'll be writing
+your own `unsafe` and `check()` plumbing.
+
+## Function families
+
+<CardGrid>
+  <Card title="SDK init / version" icon="seti:c">
+    `MV_CC_Initialize`, `MV_CC_Finalize`, `MV_CC_GetSDKVersion` — wrapped by
+    [`HikCamera`](/guide/sdk-lifecycle/).
+  </Card>
+  <Card title="Device enumeration" icon="seti:c">
+    `MV_CC_EnumDevices`, `MV_CC_IsDeviceAccessible` — wrapped by
+    [`Devices`](/guide/device-selection/).
+  </Card>
+  <Card title="Open / close handles" icon="seti:c">
+    `MV_CC_CreateHandle`, `MV_CC_OpenDevice`, `MV_CC_CloseDevice`,
+    `MV_CC_DestroyHandle` — wrapped by `Device::open()` / `Camera::close()`.
+  </Card>
+  <Card title="Streaming" icon="seti:c">
+    `MV_CC_StartGrabbing`, `MV_CC_GetImageBuffer`, `MV_CC_FreeImageBuffer`,
+    `MV_CC_StopGrabbing`, `MV_CC_GetValidImageNum`,
+    `MV_CC_ClearImageBuffer` — wrapped by
+    [`Stream`](/guide/streaming/).
+  </Card>
+  <Card title="Node map access" icon="seti:c">
+    `MV_CC_GetIntValueEx`, `MV_CC_GetFloatValue`, `MV_CC_GetBoolValue`,
+    `MV_CC_GetEnumValue`, `MV_CC_GetStringValue`, `MV_CC_SetIntValueEx`,
+    …, `MV_CC_SetCommandValue` — wrapped by
+    [`Camera` node accessors](/guide/camera-configuration/).
+  </Card>
+  <Card title="Image save / convert / ISP" icon="seti:c">
+    `MV_CC_SaveImageToFileEx2`, `MV_CC_SaveImageEx3`, `MV_CC_ConvertPixelTypeEx`,
+    `MV_CC_RotateImage`, `MV_CC_FlipImage`, `MV_CC_ImageContrast`,
+    `MV_CC_HB_Decode` — wrapped by
+    [`Stream` helpers and writers](/guide/image-and-video/).
+  </Card>
+  <Card title="Video recording" icon="seti:c">
+    `MV_CC_StartRecord`, `MV_CC_InputOneFrameEx`, `MV_CC_StopRecord` —
+    wrapped by `VideoWriter`.
+  </Card>
+  <Card title="Buffer registration" icon="seti:c">
+    `MV_CC_RegisterBuffer`, `MV_CC_UnRegisterBuffer`,
+    `MV_CC_GetPayloadSize`, `MV_CC_AllocAlignedBuffer`,
+    `MV_CC_FreeAlignedBuffer` — partially wrapped; see `Camera::register_buffer`.
+  </Card>
+  <Card title="GigE-specific" icon="seti:c">
+    `MV_GIGE_SetIpConfig`, `MV_CC_GetAllMatchInfo`, `MV_CC_GetGigEInfo`,
+    fiber-optic / multicast helpers. Not currently wrapped.
+  </Card>
+  <Card title="CameraLink-specific" icon="seti:c">
+    `MV_CAML_*` family. Not currently wrapped.
+  </Card>
+  <Card title="USB3-specific" icon="seti:c">
+    `MV_USB_SetTransferSize`. Not currently wrapped.
+  </Card>
+  <Card title="GenTL" icon="seti:c">
+    `MV_GENTL_*` family. Not currently wrapped.
+  </Card>
+  <Card title="Serial port" icon="seti:c">
+    `MV_SERIAL_*` family. Not currently wrapped.
+  </Card>
+  <Card title="Liquid lens" icon="seti:c">
+    `MV_CC_LiquidLens*` family plus auto-focus helpers. Not currently wrapped.
+  </Card>
+  <Card title="File / register / XML" icon="seti:c">
+    `MV_CC_ReadRegisters`, `MV_CC_WriteRegisters`, `MV_CC_FileAccessRead`,
+    `MV_CC_FileAccessWrite`, `MV_CC_XML_GetSymbolicByEnumEntry`. Not
+    currently wrapped.
+  </Card>
+  <Card title="Upgrade" icon="seti:c">
+    `MV_CC_UpgradeDevice_Firmware`, `MV_CC_UpgradeDevice_System`. Not
+    currently wrapped.
+  </Card>
+  <Card title="Events / exceptions" icon="seti:c">
+    `MV_CC_RegisterImageCallBackEx`, `MV_CC_RegisterExceptionCallBack`,
+    `MV_CC_GetAllMatchInfo`. Image callback is not wrapped — the safe API
+    uses pull-mode `take_frame` instead.
+  </Card>
+</CardGrid>
+
+## Authoritative source
+
+<Aside type="note" title="Header is the source of truth">
+  This page is a navigation overview. For exact signatures, parameter
+  ranges, and behavior, read the header directly:
+  [`crates/hikcamera-sys/include/MvCameraControl.h`](https://github.com/xiaoze-cn/hikcamera-rs/blob/main/crates/hikcamera-sys/include/MvCameraControl.h).
+</Aside>
+
+## See also
+
+- Structs used by these functions → [C SDK structs](/reference/c-sdk/structs/).
+- Status codes returned by these functions → [C SDK error codes](/reference/c-sdk/error-codes/).

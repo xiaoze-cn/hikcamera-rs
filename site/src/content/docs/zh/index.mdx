@@ -1,0 +1,48 @@
+---
+title: 概览
+description: 海康 MVS 工业相机的 Rust 安全封装。
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import LifecycleStrip from '@components/LifecycleStrip.jsx';
+
+`hikcamera-rs` 是一个 Windows-only 的 Rust workspace，封装海康 MVS 工业相机
+C SDK。它把设备枚举、相机配置、采集、图像/视频写入和统一错误模型收敛到一个
+小而类型化的 API 表面，同时把 `unsafe` 严格限制在 FFI 边界内。
+
+## 两个 crate
+
+<CardGrid>
+  <Card title="hikcamera-sys" icon="seti:rust">
+    通过 `bindgen` 从 `crates/hikcamera-sys/include/` 下的厂商头文件生成的
+    原始绑定，作为 `hikcamera::sys` 重新导出。
+  </Card>
+  <Card title="hikcamera" icon="seti:rust">
+    高层安全封装。公共 API 位于 `crates/hikcamera/src/`，覆盖系统生命周期、
+    设备枚举、相机控制、采集、图像与视频写入以及统一错误模型。
+  </Card>
+</CardGrid>
+
+## 选择入口
+
+<CardGrid>
+  <LinkCard title="安装" href="/zh/guide/installation/" icon="seti:settings">
+    使用 `pixi` + `just` 构建 workspace。
+  </LinkCard>
+  <LinkCard title="快速开始" href="/zh/guide/quick-start/" icon="seti:rocket">
+    五分钟内拍一张照片。
+  </LinkCard>
+  <LinkCard title="架构" href="/zh/developer/architecture/" icon="seti:sitemap">
+    为什么 workspace 拆成这种结构。
+  </LinkCard>
+  <LinkCard title="错误模型" href="/zh/developer/error-model/" icon="seti:warning">
+    SDK 返回码如何变成有类型的 Rust 错误。
+  </LinkCard>
+</CardGrid>
+
+## 生命周期一览
+
+<LifecycleStrip locale="zh" />
+
+上图的每一格都是一个独立的 Rust 类型，分别持有底层 C SDK 生命周期的不同阶段。
+按照"使用指南"的章节顺序往下读，就大致是这张图从上到下的过程。

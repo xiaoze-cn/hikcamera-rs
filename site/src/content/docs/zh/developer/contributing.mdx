@@ -1,0 +1,139 @@
+---
+title: 贡献
+description: 日常 just 命令、格式化规则、语言策略和 lefthook 在提交时会强制什么。
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import RecipeTable from '@components/RecipeTable.jsx';
+
+感谢你想贡献。这一页覆盖提交 PR 真正需要的东西——`just` recipe、格式化、语言
+规则，以及 `lefthook` 在 commit 时会检查什么。
+
+## 开工之前
+
+读仓库根的
+[`AGENTS.md`](https://github.com/xiaoze-cn/hikcamera-rs/blob/main/AGENTS.md)。
+它是写给 AI coding agent 和与它们 pairing 的人的权威贡献指南。这一页是更友好、
+更短的版本；`AGENTS.md` 才是真正的源头。
+
+## 日常命令
+
+一切通过 `just`——裸 `cargo` 会失败，因为构建需要 `LIBCLANG_PATH`（见
+[安装](/zh/guide/installation/)）。
+
+<RecipeTable
+  locale="zh"
+  rows={[
+    ["setup", "安装 pixi 环境、复制 `libclang.dll`、装 lefthook 钩子"],
+    ["check", "`cargo check --workspace`"],
+    ["build", "`cargo build --workspace`"],
+    ["build-examples", "`cargo build --workspace --examples`"],
+    ["test", "`cargo test --workspace`"],
+    ["fmt-check", "`rustfmt` 检查"],
+    ["pre-commit", "`fmt-check` + `check`（lefthook 在 commit 时跑的）"],
+    ["clean", "`cargo clean`"],
+  ]}
+/>
+
+把额外参数转发给 cargo：
+
+```sh
+just test --lib error     # cargo test --workspace --lib error
+```
+
+## 语言策略
+
+<Aside type="danger" title="代码侧文本只能用英文">
+  所有注释、文档注释、commit message、代码侧字符串必须是英文。中文只允许
+  出现在 `docs/` 风格的、与上游 C SDK 风格呼应的用户文档里——即便是那种地方，
+  只要英文不丢失含义就优先用英文。
+</Aside>
+
+代码标识符用美式拼写（`color`，不是 `colour`）。
+
+## 格式化
+
+- `rustfmt` 跑项目默认配置（没有自定义 `rustfmt.toml`）。
+- 声明改动完成前跑 `just fmt-check`。
+- `just pre-commit` 同时跑 `fmt-check` 和 `check`——这正是 `lefthook` 在
+  `git commit` 时会跑的，所以本地过就等于提交时过。
+
+## `unsafe` 策略
+
+`crates/hikcamera/src/` 里不允许出现对 `crate::sys::*` 的 FFI 调用之外的
+`unsafe`。即便是那些，也应当被 `check(...)` 或更高层 helper 包好。新增
+`unsafe` 块必须配 `// SAFETY:` 注释解释不变量。详见
+[架构](/zh/developer/architecture/)。
+
+## 依赖策略
+
+<Steps>
+
+1. **优先 `thiserror`** 做错误枚举。已经在用、很简单。
+2. **`derive_more`** 适合给琐碎 newtype / `From` / `Into` / `Display` 样板
+   去冗，**前提是生成的 API 真有人用**。不要加一个没有调用点的
+   `#[derive(derive_more::X)]`——那只是 API 表面。加之前指出派生项在哪里被
+   调用。
+3. **`strum`** 适合能从 `EnumIter`、`IntoStaticStr`、`VariantArray` 等受益的
+   枚举。
+4. **不要**为节省不到 ~5 行的一次性 `derive` 引入新依赖。
+5. 不要给"内部查表结果"或"不透明句柄"语义的类型派生构造器
+   （`Constructor`、`new`）——暴露构造会让调用方能伪造本该只由 wrapper 产生
+   的值。
+
+</Steps>
+
+## 错误处理
+
+改 `error.rs` 时：
+
+- SDK 状态码经过 `Status(i32)`——签名里永远别用裸 `i32`。
+- `check(code: i32) -> Result<()>` 是把 SDK 返回值转成 `Result` 的唯一入口。
+- `HikCameraError::Sdk` 是唯一承载 SDK 码的变体；wrapper 错误靠变体本身
+  （或 `info().name`）区分。
+- **新增 SDK 错误码就是往 `SDK_ERRORS` 追加一行**，不要写更多 match 分支。
+- `Display` 通过 `thiserror` 派生。`#[error("...")]` 和 `info()` 要保持一致——
+  `display_matches_info_for_fieldless_variants` 测试守护无字段变体。
+
+设计理由见 [错误模型](/zh/developer/error-model/)。
+
+## 注意事项
+
+<Tabs>
+  <TabItem label="bindgen 重构很慢">
+    `bindgen` 会解析完整的 MSVC + SDK 头文件集。除非任务就是改 FFI，否则不要
+    动 `crates/hikcamera-sys/wrapper.h`、`include/*.h` 或 `build.rs`。
+  </TabItem>
+  <TabItem label="MV_* 常量是 u32">
+    Bindgen 因为 C `#define` 是 `0x80000000` 风格字面量，把它们生成 `u32`。
+    SDK 函数本身返回 `int`（带符号）。转换边界集中在 `error::check` 和
+    `Status::OK`——别在别处撒 `as i32` / `as u32`。
+  </TabItem>
+  <TabItem label="示例需要真相机">
+    `crates/hikcamera/examples/*.rs` 跑起来需要接相机。`just build-examples`
+    就足以验证它们能编译。
+  </TabItem>
+  <TabItem label="不要未经指示做 git 操作">
+    如果你是 AI agent，不要 commit、branch、push 除非用户要求。lefthook 在
+    commit 时本来就会跑 `fmt-check` + `check`。
+  </TabItem>
+</Tabs>
+
+## Pull request 流程
+
+<Steps>
+
+1. 从 `main` 开分支。
+2. 做改动。保持外科手术式——不要顺手重构无关代码。
+3. 本地跑 `just pre-commit`。把它的抱怨都修掉。
+4. 开 PR，描述清楚，引用相关 issue。
+5. 改动如果触碰公共 API，记得同步改对应的 Guide 或 Reference 页面。
+
+</Steps>
+
+<Aside type="note" title="哪里找上下文">
+  - `docs/`（本站点）——按模块组织的安全 wrapper 设计说明
+  - `crates/hikcamera-sys/include/`——海康 MVS 原始头文件（行为、参数范围、
+    错误码的真正源头）
+  - `AGENTS.md`——完整贡献指南
+</Aside>

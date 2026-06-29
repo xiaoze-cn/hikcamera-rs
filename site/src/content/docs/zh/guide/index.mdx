@@ -1,0 +1,33 @@
+---
+title: 使用指南
+description: 用 hikcamera-rs 枚举设备、配置相机、采集图像并写入图片或视频。
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+使用指南按"你要做什么"组织，顺序大致是大多数用户第一次走完一遍的流程。
+
+<CardGrid>
+  <LinkCard title="安装" href="/zh/guide/installation/" icon="seti:settings">
+    准备 `pixi`、`just` 和 libclang 运行时，验证一次干净的 workspace 构建。
+  </LinkCard>
+  <LinkCard title="快速开始" href="/zh/guide/quick-start/" icon="seti:rocket">
+    打开默认设备、设置曝光和增益、采集单帧并写入磁盘。
+  </LinkCard>
+  <LinkCard title="SDK 生命周期" href="/zh/guide/sdk-lifecycle/" icon="seti:clock">
+    `HikCamera` 如何通过共享引用计数初始化和反初始化底层 C SDK。
+  </LinkCard>
+  <LinkCard title="设备选择" href="/zh/guide/device-selection/" icon="seti:search">
+    枚举可见相机，按序列号、用户名、IP 或 MAC 选中一台。
+  </LinkCard>
+  <LinkCard title="相机配置" href="/zh/guide/camera-configuration/" icon="seti:config">
+    在已打开的设备上设置曝光、增益、像素格式、触发模式、ROI 以及任意
+    GenICam 节点。
+  </LinkCard>
+  <LinkCard title="采集" href="/zh/guide/streaming/" icon="seti:video">
+    进入 grabbing 模式，按超时取帧，并干净停止采集。
+  </LinkCard>
+  <LinkCard title="图像与视频写入" href="/zh/guide/image-and-video/" icon="seti:media">
+    将单帧保存为 BMP/JPEG/PNG/TIFF，或将多帧录制为 AVI。
+  </LinkCard>
+</CardGrid>

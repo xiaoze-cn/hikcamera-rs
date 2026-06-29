@@ -1,0 +1,28 @@
+---
+title: Obsolete C params
+description: Deprecated camera parameter macros from ObsoleteCamParams.h kept for bindgen compatibility.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`ObsoleteCamParams.h` collects camera parameter macros (mostly
+`#define`-style enum values) that the vendor has obsoleted. Like
+`MvObsoleteInterfaces.h`, the wrapper keeps this header in the bindgen
+inputs to produce complete bindings; these macros are **not** surfaced
+through the safe `hikcamera` API.
+
+## Status
+
+- All values here are deprecated upstream.
+- They are kept to avoid breaking `bindgen` output against older vendor
+  SDK versions.
+- They do not correspond to a separate runtime library.
+
+<Aside type="note" title="Authoritative source">
+  For the full list of deprecated macros, read the header directly:
+  [`crates/hikcamera-sys/include/ObsoleteCamParams.h`](https://github.com/xiaoze-cn/hikcamera-rs/blob/main/crates/hikcamera-sys/include/ObsoleteCamParams.h).
+</Aside>
+
+## See also
+
+- Obsolete entry points → [Obsolete C interfaces](/reference/c-sdk/obsolete-interfaces/).

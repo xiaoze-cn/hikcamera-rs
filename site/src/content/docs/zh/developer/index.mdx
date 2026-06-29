@@ -1,0 +1,23 @@
+---
+title: 开发者文档
+description: 面向 hikcamera-rs 维护者和贡献者的架构、错误模型和贡献规则。
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+这里的页面是写给"想改这个 wrapper"而不是"只用它"的人。开非平凡 PR 之前建议
+按顺序读完。
+
+<CardGrid>
+  <LinkCard title="架构" href="/zh/developer/architecture/" icon="seti:sitemap">
+    为什么 workspace 拆成 `hikcamera-sys` 和 `hikcamera`、`unsafe` 的边界、
+    分层类型如何持有 C SDK 生命周期。
+  </LinkCard>
+  <LinkCard title="错误模型" href="/zh/developer/error-model/" icon="seti:warning">
+    原始 SDK 状态码如何变成有类型的 `HikCameraError`、`Status` newtype、以及
+    常量查找表的设计。
+  </LinkCard>
+  <LinkCard title="贡献" href="/zh/developer/contributing/" icon="seti:puzzle">
+    日常 `just` 命令、格式化规则、语言策略，以及 lefthook 在提交时会强制什么。
+  </LinkCard>
+</CardGrid>

@@ -1,0 +1,144 @@
+---
+title: 图像与视频写入
+description: 把单帧保存为 BMP/JPEG/PNG/TIFF，或多帧录制为 AVI。
+---
+
+import { Aside, Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+`Stream` 暴露两个 writer 构造器——`save_image` 用于单张静图，`save_video`
+用于多帧录制。两者都返回一个 writer 对象，你把 `Frame` 喂进去；writer 持有
+该文件的 SDK save/record 生命周期。
+
+## 保存单张图片
+
+```rust
+let mut image = stream.save_image("capture.bmp")?;
+image.write_frame(&frame)?;
+image.finish()?;
+```
+
+`save_image(path)` 用合理的默认值。用 `save_image_with` 覆盖格式、质量或
+两者：
+
+```rust
+use hikcamera::{ImageFormat, SaveOptions};
+
+let opts = SaveOptions {
+    format: ImageFormat::Jpeg,
+    quality: 90,                        // JPEG 质量，1..=100
+};
+let mut image = stream.save_image_with("capture.jpg", opts)?;
+image.write_frame(&frame)?;
+image.finish()?;
+```
+
+### 支持的图像格式
+
+| `ImageFormat` | 说明 |
+| --- | --- |
+| `Bmp` | 路径以 `.bmp` 结尾时的默认。无损，体积大。 |
+| `Jpeg` | 有损。设 `quality` 1..=100。 |
+| `Png` | 无损带压缩。 |
+| `Tiff` | 无损。多次 `write_frame` 会拼成多页 TIFF。 |
+| `Raw` | 厂商特定 raw 容器。 |
+
+路径后缀只是个提示；真正用的是 `SaveOptions.format` 那个。不填时 wrapper
+按扩展名推断。
+
+## 录制 AVI 视频
+
+```rust
+use std::time::{Duration, Instant};
+
+let mut video = stream.save_video("clip.avi", 30.0)?;     // 30 fps
+let started = Instant::now();
+while started.elapsed() < Duration::from_secs(10) {
+    let frame = stream.take_frame(Duration::from_secs(1))?;
+    video.write_frame(&frame)?;
+}
+let video = video.finish()?;
+println!("wrote {} frames over {:?}", video.frame_count, video.elapsed);
+```
+
+### `VideoWriter` 生命周期
+
+<Steps>
+
+1. **构造**：`stream.save_video(path, fps)` 或
+   `stream.save_video_with(VideoOptions { … })`。
+2. **首次 `write_frame`**：懒触发 `MV_CC_StartRecord`，按这帧的像素格式和
+   尺寸建立录制——首帧决定格式。
+3. **每次 `write_frame`**：调 `MV_CC_InputOneFrameEx`，`frame_count` 加 1。
+4. **`finish()`**：调 `MV_CC_StopRecord`，返回包含 `frame_count`、
+   `frame_rate`、`width`、`height`、`pixel_type`、`elapsed` 的 `Video`。
+
+</Steps>
+
+### 录制约束
+
+<Aside type="danger" title="每个 Stream 同时只能有一个录制">
+  SDK 对每个设备句柄只支持一个活动录制。在第一个 `VideoWriter` 还没关闭时
+  再开第二个会返回 `HikCameraError::RecordingInProgress`。开下一个之前一定
+  先 `finish()`。
+</Aside>
+
+<Aside type="note" title="帧格式必须和源一致">
+  wrapper 不会在送进录制器前做格式转换。想录的像素格式和传感器输出不一致，
+  先调 `stream.convert_frame(&frame, format)?` 再喂给 writer。
+</Aside>
+
+## 高层快捷方法
+
+不想自己管 writer 对象时，`Camera` 提供两个便捷方法，把"开流 → 取帧 →
+保存"全流程包好：
+
+```rust
+// 一行：开流 → 取一帧 → 保存 → 返回 Camera。
+let frame = camera.take_image("snapshot.bmp")?;
+
+// 一行：开流 → 录 N 秒 → 返回 Camera。
+let camera = camera.take_video("clip.avi", Duration::from_secs(5))?;
+```
+
+原型阶段很好用；生产循环里通常更想要显式的 `save_image_with` /
+`save_video_with`，方便控制选项和时序。
+
+## 完整示例
+
+`crates/hikcamera/examples/camera.rs` 依次做这两件事：
+
+<Tabs>
+  <TabItem label="拍静图">
+
+    ```rust
+    let mut stream = camera.stream()?;
+    let frame = stream.take_frame(Duration::from_secs(1))?;
+    let mut image = stream.save_image(Path::new(IMAGE_PATH))?;
+    image.write_frame(&frame)?;
+    image.finish()?;
+    ```
+
+  </TabItem>
+  <TabItem label="录视频">
+
+    ```rust
+    let mut stream = camera.stream()?;
+    let mut video = stream.save_video(Path::new(VIDEO_PATH), 30.0)?;
+    let started = Instant::now();
+    while started.elapsed() < Duration::from_secs(10) {
+        let frame = stream.take_frame(Duration::from_secs(1))?;
+        video.write_frame(&frame)?;
+    }
+    let _video = video.finish()?;
+    ```
+
+  </TabItem>
+</Tabs>
+
+用 `just build-examples` 构建，然后
+`cargo run --package hikcamera --example camera` 运行（需要真相机）。
+
+## 下一步
+
+- 看架构 → [架构](/zh/developer/architecture/)。
+- 看 `Frame` 和 `FrameInfo` 的形状 → [采集](/zh/guide/streaming/)。

@@ -1,0 +1,117 @@
+---
+title: 运行时依赖
+description: hikcamera-sys 的 DLL、导入库和 C 头文件依赖关系。
+---
+
+import RuntimeDependencyGraph from '@components/RuntimeDependencyGraph.jsx';
+import { Aside, Card, CardGrid, FileTree, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+`hikcamera-sys` 通过一个公共头文件入口和一个导入库绑定 HikCamera MVS C SDK：
+
+- 头文件入口：`crates/hikcamera-sys/wrapper.h`
+- C SDK 头文件：`crates/hikcamera-sys/include/MvCameraControl.h`
+- 导入库：`crates/hikcamera-sys/lib/{win32,win64}/MvCameraControl.lib`
+- 运行时 DLL：`crates/hikcamera-sys/lib/{win32,win64}/MvCameraControl.dll`
+
+<Aside type="note" title="已裁剪厂商运行时">
+  仓库不再保留厂商 SDK 自带的全部 DLL。当前只保留 wrapper 使用的 `MvCameraControl.dll` 运行路径，删除 GUI、DirectShow、GenTL producer、采集卡、串口工具、独立媒体组件等文件。
+</Aside>
+
+<RuntimeDependencyGraph client:load locale="zh" />
+
+## 构建和运行流程
+
+<Steps>
+1. `wrapper.h` include `MvCameraControl.h`。
+2. `MvCameraControl.h` 汇入 `CameraParams.h`、`PixelType.h`、`MvErrorDefine.h`、`MvISPErrorDefine.h` 和 obsolete 厂商头文件。
+3. `bindgen` 把 C 声明生成到 Cargo 的 `OUT_DIR`。
+4. `build.rs` 通过 `cargo:rustc-link-lib=dylib=MvCameraControl` 链接 `MvCameraControl.lib`。
+5. 最终 Rust 二进制在运行时加载 `MvCameraControl.dll`。
+6. `MvCameraControl.dll` 再加载保留的 GenICam、render、ISP、IPP 和厂商运行时 DLL。
+</Steps>
+
+## 最终 lib 目录结构
+
+<Tabs>
+  <TabItem label="win64">
+    <FileTree>
+      - crates/hikcamera-sys/lib/win64/
+        - CommonParameters.ini
+        - MvCameraControl.lib
+        - MvCameraControl.dll
+        - MvRender.dll
+        - MvISPControl.dll
+        - GCBase_MD_VC120_v3_0_MV.dll
+        - GenApi_MD_VC120_v3_0_MV.dll
+        - Log_MD_VC120_v3_0_MV.dll
+        - MathParser_MD_VC120_v3_0_MV.dll
+        - NodeMapData_MD_VC120_v3_0_MV.dll
+        - XmlParser_MD_VC120_v3_0_MV.dll
+        - ippi.dll
+        - ippcore.dll
+        - libmmd.dll
+        - msvcr100.dll
+        - pthreadVC2.dll
+    </FileTree>
+  </TabItem>
+  <TabItem label="win32">
+    <FileTree>
+      - crates/hikcamera-sys/lib/win32/
+        - CommonParameters.ini
+        - MvCameraControl.lib
+        - MvCameraControl.dll
+        - MvRender.dll
+        - MvISPControl.dll
+        - GCBase_MD_VC120_v3_0_MV.dll
+        - GenApi_MD_VC120_v3_0_MV.dll
+        - Log_MD_VC120_v3_0_MV.dll
+        - MathParser_MD_VC120_v3_0_MV.dll
+        - NodeMapData_MD_VC120_v3_0_MV.dll
+        - XmlParser_MD_VC120_v3_0_MV.dll
+        - ippi.dll
+        - ippcore.dll
+        - libmmd.dll
+        - msvcr100.dll
+        - pthreadVC2.dll
+    </FileTree>
+  </TabItem>
+</Tabs>
+
+## 头文件到运行库的关系
+
+<CardGrid>
+  <Card title="MvCameraControl.h">
+    提供设备枚举、句柄生命周期、取流、节点访问、图像保存/转换、录像、ISP helper、XML helper 等 SDK 入口。运行时调用进入 `MvCameraControl.dll` 及其依赖链。
+  </Card>
+  <Card title="CameraParams.h">
+    提供设备、帧、节点、图像、保存、录像、传输层等结构体和枚举。它们是编译期布局；运行时调用仍通过 `MvCameraControl.dll`。
+  </Card>
+  <Card title="PixelType.h">
+    提供帧和图像 API 使用的像素格式常量。运行时处理在 `MvCameraControl.dll` 以及图像/ISP 支持 DLL 中。
+  </Card>
+  <Card title="MvErrorDefine.h">
+    提供 `MV_E_*` SDK 状态码常量。Rust 中通过 `Status` 和 `StatusInfo` 查询表暴露。
+  </Card>
+  <Card title="MvISPErrorDefine.h">
+    提供 `MV_ALG_*` ISP/算法状态码常量。ISP 操作可能需要 `MvISPControl.dll` 和 IPP DLL。
+  </Card>
+  <Card title="Obsolete headers">
+    `MvObsoleteInterfaces.h` 和 `ObsoleteCamParams.h` 为 bindgen 兼容保留，但不意味着单独的运行时 DLL。
+  </Card>
+</CardGrid>
+
+## 已删除的运行时分组
+
+| 分组 | 示例 |
+| --- | --- |
+| GUI 和 wrapper helper | `MvCameraControlGUI.dll`, `MvCameraControlWrapper.dll`, `MvCameraPatch.dll` |
+| DirectShow filter | `MvDSS.ax`, `MvDSS2.ax` |
+| GenTL producer plugin | `MvProducerGEV.cti`, `MvProducerU3V.cti`, `MvFGProducer*.cti` |
+| 采集卡控制栈 | `MVFGControl.dll`, `MvLCProducer.dll`, `MvCamLVision.dll` |
+| 独立传输层/运行时 helper | `MvUsb3vTL.dll`, `MvSerial.dll`, `MvSerialCtrl.dll`, `MVGigEVisionSDK.dll` |
+| 媒体/第三方编解码 | `MediaProcess.dll`, `ThirdParty/*.dll`, `D3DCompiler_43.dll` |
+| 未使用的 C runtime 变体 | kept 依赖链没有导入的旧 VC90/VC120 DLL |
+
+<Aside type="caution" title="未来 SDK API 可能改变依赖列表">
+  如果未来 wrapper API 调用了会动态加载已删除组件的 SDK 函数，应恢复对应 DLL，并在本页补充新的依赖路径。
+</Aside>

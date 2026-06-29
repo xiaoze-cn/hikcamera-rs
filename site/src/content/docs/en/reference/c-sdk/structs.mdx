@@ -1,0 +1,66 @@
+---
+title: C SDK structs
+description: Overview of the structs and enums declared in CameraParams.h.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+`CameraParams.h` is the data-shape header of the HikCamera MVS C SDK. It
+declares no functions — only the structs, enums, and `#define` constants
+used by the entrypoints in `MvCameraControl.h`. The Rust wrapper re-exports
+the bindgen-generated versions of these through `hikcamera::sys::*`.
+
+## Family overview
+
+<CardGrid>
+  <Card title="Device info" icon="seti:c">
+    `MV_CC_DEVICE_INFO_LIST`, `MV_CC_DEVICE_INFO`,
+    `MV_GIGE_DEVICE_INFO`, `MV_USB_DEVICE_INFO`, `MV_CAML_DEVICE_INFO`,
+    and the per-transport special-info unions.
+  </Card>
+  <Card title="Frame I/O" icon="seti:c">
+    `MV_FRAME_OUT`, `MV_FRAME_OUT_INFO`, `MV_FRAME_OUT_INFO_EX`,
+    `MV_CC_IMAGE`, `MV_CC_INPUT_FRAME_INFO_EX`, `MV_SAVE_IMAGE_TO_FILE_PARAM`,
+    `MV_SAVE_IMAGE_PARAM_EX`, `MV_ROTATION_IMAGE_PARAM`,
+    `MV_FLIP_IMAGE_PARAM`, `MV_CC_PIXEL_CONVERT_PARAM`.
+  </Card>
+  <Card title="Recording" icon="seti:c">
+    `MV_CC_RECORD_PARAM`, used by `MV_CC_StartRecord`.
+  </Card>
+  <Card title="Node map values" icon="seti:c">
+    `MVCC_INTVALUE` / `MVCC_INTVALUE_EX`, `MVCC_FLOATVALUE`,
+    `MVCC_ENUMVALUE`, `MVCC_STRINGVALUE`, `MVCC_BOOLVALUE`,
+    plus the entry-symbolic helpers `MVCC_ENUMENTRY`.
+  </Card>
+  <Card title="Transports" icon="seti:c">
+    `MV_NC_TRANSMISSION_TYPE`, `MV_GIGE_TRANSMISSION_TYPE`,
+    `MV_ACTION_CMD_INFO`, `MV_ACTION_CMD_RESULT`,
+    `MV_CC_DEVICE_INFO_LIST`. Plus the `MV_GIGE_DEVICE` /
+    `MV_USB_DEVICE` / `MV_CAMERALINK_DEVICE` device-type macros.
+  </Card>
+  <Card title="Exceptions / events" icon="seti:c">
+    `MV_EVENT_FRAME_INFO`, plus the various event-callback payload structs.
+  </Card>
+  <Card title="Frame grabber" icon="seti:c">
+    `MV_CC_INTERFACE_INFO_LIST`, `MV_CC_INTERFACE_INFO`.
+  </Card>
+  <Card title="Misc enums" icon="seti:c">
+    `MV_ACCESS_MODES`, `MV_GRAB_STRATEGY`, `MV_SAVE_IMAGE_TYPE`,
+    `MV_ROTATION_MODE`, `MV_FLIP_TYPE`, `MV_TRIGGER_MODE`,
+    `MV_XML_InterfaceType`, `MV_XML_AccessMode`, `MV_GIGE_TRANSMISSION_TYPE`.
+  </Card>
+</CardGrid>
+
+## Authoritative source
+
+<Aside type="note" title="Header is the source of truth">
+  This page is a navigation overview. For exact field layouts, padding, and
+  transport-specific unions, read the header directly:
+  [`crates/hikcamera-sys/include/CameraParams.h`](https://github.com/xiaoze-cn/hikcamera-rs/blob/main/crates/hikcamera-sys/include/CameraParams.h).
+</Aside>
+
+## See also
+
+- Transport-classification enum parsed from this header →
+  [Device info fields](/reference/device-info-fields/#transport-enum).
+- Functions that take these structs → [C SDK functions](/reference/c-sdk/functions/).

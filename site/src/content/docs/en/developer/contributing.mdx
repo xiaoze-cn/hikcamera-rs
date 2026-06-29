@@ -1,0 +1,154 @@
+---
+title: Contributing
+description: Day-to-day just commands, formatting rules, language policy, and what lefthook enforces on commit.
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import RecipeTable from '@components/RecipeTable.jsx';
+
+Thanks for wanting to contribute. This page covers what you actually need to
+land a pull request — `just` recipes, formatting, language rules, and what
+`lefthook` will check on commit.
+
+## Before anything else
+
+Read [`AGENTS.md`](https://github.com/xiaoze-cn/hikcamera-rs/blob/main/AGENTS.md)
+at the repository root. It is the canonical contributor guide for both AI
+coding agents and humans pairing with them. This page is the friendlier,
+shorter version; `AGENTS.md` is the source of truth.
+
+## Day-to-day commands
+
+Everything goes through `just` — bare `cargo` will fail because the build
+needs `LIBCLANG_PATH` set (see [Installation](/guide/installation/)).
+
+<RecipeTable
+  locale="en"
+  rows={[
+    ["setup", "Install pixi env, copy `libclang.dll`, install lefthook hooks"],
+    ["check", "`cargo check --workspace`"],
+    ["build", "`cargo build --workspace`"],
+    ["build-examples", "`cargo build --workspace --examples`"],
+    ["test", "`cargo test --workspace`"],
+    ["fmt-check", "`rustfmt` check"],
+    ["pre-commit", "`fmt-check` + `check` (what lefthook runs on commit)"],
+    ["clean", "`cargo clean`"],
+  ]}
+/>
+
+Forward ad-hoc args to cargo:
+
+```sh
+just test --lib error     # cargo test --workspace --lib error
+```
+
+## Language policy
+
+<Aside type="danger" title="Code-facing text is English only">
+  All comments, doc comments, commit messages, and code-facing strings must
+  be in English. Chinese is acceptable only inside `docs/`-style user-facing
+  documentation that mirrors the upstream C SDK style — and even there,
+  English is preferred where it doesn't lose meaning.
+</Aside>
+
+Code identifiers use American English spelling (`color`, not `colour`).
+
+## Formatting
+
+- `rustfmt` with the project's default config (no custom `rustfmt.toml`).
+- Run `just fmt-check` before declaring a change done.
+- `just pre-commit` runs both `fmt-check` and `check` — this is exactly what
+  `lefthook` will run on `git commit`, so passing locally == passing at
+  commit time.
+
+## `unsafe` policy
+
+No `unsafe` in `crates/hikcamera/src/` outside of FFI calls into
+`crate::sys::*`. Even those should be wrapped by `check(...)` or a
+higher-level helper. New `unsafe` blocks need a `// SAFETY:` comment
+explaining the invariant. See [Architecture](/developer/architecture/).
+
+## Dependency policy
+
+<Steps>
+
+1. **Prefer `thiserror`** for error enums. It's already in use and trivial.
+2. **`derive_more`** is welcome for trivial newtype / `From` / `Into` /
+   `Display` boilerplate **when the generated API is actually used**. Don't
+   add a `#[derive(derive_more::X)]` whose generated method has no call site
+   — that's just surface area. Before adding it, point to where the derived
+   item gets called.
+3. **`strum`** is welcome for enums that benefit from `EnumIter`,
+   `IntoStaticStr`, `VariantArray`, etc.
+4. Do **not** add a new dependency for a one-off `derive` that saves fewer
+   than ~5 lines.
+5. Don't `derive` constructors (`Constructor`, `new`) on types whose
+   semantics are "internal lookup result" or "opaque handle" — exposing
+   construction lets callers forge values that should only come from the
+   wrapper.
+
+</Steps>
+
+## Error handling
+
+When you touch `error.rs`:
+
+- SDK status codes flow through `Status(i32)` — never as raw `i32` in
+  signatures.
+- `check(code: i32) -> Result<()>` is the only entry point for converting an
+  SDK return value into a `Result`.
+- `HikCameraError::Sdk` is the only variant carrying an SDK code; wrapper
+  errors are discriminated by variant (or `info().name`).
+- **Add new SDK error codes by appending to `SDK_ERRORS`**, not by writing
+  more match arms.
+- `Display` is derived via `thiserror`. Keep `#[error("...")]` and
+  `info()` aligned — the
+  `display_matches_info_for_fieldless_variants` test guards the fieldless
+  variants.
+
+See [Error model](/developer/error-model/) for the design rationale.
+
+## Things to watch out for
+
+<Tabs>
+  <TabItem label="Bindgen rebuild is slow">
+    `bindgen` parses the full MSVC + SDK header set. Don't touch
+    `crates/hikcamera-sys/wrapper.h`, `include/*.h`, or `build.rs` unless
+    the task is specifically about FFI.
+  </TabItem>
+  <TabItem label="MV_* constants are u32">
+    Bindgen emits them as `u32` because the C `#define`s are
+    `0x80000000`-style literals. The SDK functions return `int` (signed).
+    The conversion boundary is consolidated in `error::check` and
+    `Status::OK` — don't sprinkle `as i32` / `as u32` casts elsewhere.
+  </TabItem>
+  <TabItem label="Examples need a real camera">
+    `crates/hikcamera/examples/*.rs` require a connected camera to actually
+    run. `cargo build --examples` (via `just build-examples`) is enough to
+    validate they compile.
+  </TabItem>
+  <TabItem label="No git operations unprompted">
+    If you're an AI agent, don't commit, branch, or push unless the user
+    asks. Lefthook runs `fmt-check` + `check` on commit anyway.
+  </TabItem>
+</Tabs>
+
+## Pull request flow
+
+<Steps>
+
+1. Branch off `main`.
+2. Make the change. Keep edits surgical — don't refactor unrelated code.
+3. Run `just pre-commit` locally. Fix anything it complains about.
+4. Open the PR with a clear description. Reference any issue numbers.
+5. If the change touches public API, document it in the relevant Guide or
+   Reference page.
+
+</Steps>
+
+<Aside type="note" title="Where to look for context">
+  - `docs/` (this site) — design notes for the safe wrapper, by module
+  - `crates/hikcamera-sys/include/` — original HikCamera MVS headers (the
+    source of truth for behavior, parameter ranges, and error codes)
+  - `AGENTS.md` — full contributor guide
+</Aside>

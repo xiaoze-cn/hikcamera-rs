@@ -1,0 +1,144 @@
+---
+title: Quick start
+description: Capture a single frame with the default device in under five minutes.
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+This walk-through captures a single frame from the default visible camera and
+writes it to disk as a BMP. It exercises the full stack:
+`HikCamera` → `Devices` → `Device` → `Camera` → `Stream` → `Frame` →
+`ImageWriter`.
+
+## Full example
+
+```rust
+use std::path::Path;
+use std::time::Duration;
+
+use hikcamera::{HikCamera, Rotation};
+
+const IMAGE_PATH: &str = "image.bmp";
+const TIMEOUT: Duration = Duration::from_secs(1);
+
+fn main() -> hikcamera::Result<()> {
+    let hik = HikCamera::new()?;
+
+    let devices = hik.devices()?;
+    let device = devices.default()?;
+    let mut camera = device.open()?;
+
+    camera.set_exposure(8000.0)?;
+    camera.set_gain(3.0)?;
+
+    let mut stream = camera.stream()?;
+    let frame = stream.take_frame(TIMEOUT)?;
+    let frame = stream.rotate_frame(&frame, Rotation::Angle180)?;
+
+    let mut output = stream.save_image(Path::new(IMAGE_PATH))?;
+    output.write_frame(&frame)?;
+    output.finish()?;
+
+    println!(
+        "captured image: {}x{}, {} bytes",
+        frame.info.width, frame.info.height, frame.data.len(),
+    );
+
+    let camera = stream.stop()?;
+    camera.close()?;
+    Ok(())
+}
+```
+
+## Step-by-step
+
+<Steps>
+
+1. **Initialize the SDK.** `HikCamera::new()` calls `MV_CC_Initialize` on the
+   first instance and registers a shared refcount so multiple `HikCamera`
+   values can coexist safely.
+
+2. **Enumerate devices.** `hik.devices()` returns a `Devices` collection
+   backed by `MV_CC_EnumDevices` over GigE + USB transports.
+
+3. **Pick a device.** `devices.default()` returns the first one. For stable
+   device selection across reboots, prefer `devices.serial_number("…")` —
+   see [Device selection](/guide/device-selection/).
+
+4. **Open it.** `device.open()` calls `MV_CC_CreateHandle` +
+   `MV_CC_OpenDevice`, returning a `Camera` that owns the parameter node
+   map.
+
+5. **Configure.** `set_exposure` and `set_gain` are typed helpers over the
+   underlying GenICam nodes (`ExposureTime`, `Gain`). See
+   [Camera configuration](/guide/camera-configuration/) for the full menu.
+
+6. **Enter grabbing.** `camera.stream()` consumes the `Camera` and calls
+   `MV_CC_StartGrabbing`, returning a `Stream`.
+
+7. **Pull a frame.** `stream.take_frame(timeout)` blocks up to `timeout` for
+   the next frame, returning a `Frame`. The buffer is freed automatically
+   when the `Frame` is dropped.
+
+8. **Process.** `stream.rotate_frame(&frame, Rotation::Angle180)` returns a
+   new `Frame` with the pixels rotated in place — useful for cameras mounted
+   upside-down.
+
+9. **Write to disk.** `stream.save_image(path)` returns an `ImageWriter`
+   bound to a single output file. Call `write_frame(&frame)` once (or
+   multiple times for multi-page formats) and then `finish()` to flush.
+
+10. **Tear down in order.** `stream.stop()` calls `MV_CC_StopGrabbing` and
+    hands the `Camera` back. `camera.close()` calls `MV_CC_CloseDevice` +
+    `MV_CC_DestroyHandle`. Dropping the last `HikCamera` calls
+    `MV_CC_Finalize`.
+
+</Steps>
+
+## Run it against a real camera
+
+<Aside type="danger" title="Examples need a real camera">
+  The bundled example under `crates/hikcamera/examples/camera.rs` opens the
+  default device, captures a still image, and records a 10-second AVI. It
+  will not work in CI / without a connected camera.
+</Aside>
+
+Build and run it through `just` (see
+[Installation](/guide/installation/#always-invoke-cargo-through-just) for why
+cargo must go through `just`):
+
+```sh
+just build-examples
+# Make sure your camera shows up in MVS viewer first, then:
+cargo run --package hikcamera --example camera
+```
+
+## Common pitfalls
+
+<Tabs>
+  <TabItem label="`HikCameraError::NoDevice`">
+    No camera was enumerated. Confirm:
+
+    - The camera appears in MVS Viewer
+    - GigE cameras are on the same subnet as the host NIC
+    - USB cameras are not bound by another process (close MVS Viewer)
+  </TabItem>
+  <TabItem label="`HikCameraError::Sdk { status: MV_E_NODATA }`">
+    `take_frame` timed out. Common causes:
+
+    - Trigger mode is on but no trigger is arriving (switch to
+      `Trigger::Off`, see [Camera configuration](/guide/camera-configuration/))
+    - Exposure time exceeds the requested `timeout`
+    - Stream was stopped on another thread
+  </TabItem>
+  <TabItem label="`MV_GIGE_DEVICE` packets dropped">
+    Increase `MTU` on both the camera and the host NIC, or lower
+    `AcquisitionFrameRate` to reduce bandwidth pressure.
+  </TabItem>
+</Tabs>
+
+## Next steps
+
+- Pin a specific device across reboots → [Device selection](/guide/device-selection/).
+- See all configuration helpers → [Camera configuration](/guide/camera-configuration/).
+- Record video → [Image and video writers](/guide/image-and-video/).

@@ -60,9 +60,10 @@ HikCamera/
 ├── Cargo.toml
 ├── Cargo.lock
 ├── README.md
-├── docs/
-│   ├── c-sdk
-│   └── rust-sdk
+├── AGENTS.md
+├── justfile
+├── pixi.toml
+├── site/                # Starlight 文档站点
 └── crates/
     ├── hikcamera/
     │   ├── Cargo.toml
@@ -75,10 +76,8 @@ HikCamera/
     └── hikcamera-sys/
         ├── Cargo.toml
         ├── build.rs
-        ├── MvCamera.h
-        ├── src/
-        │   └── lib.rs
-        ├── includes/
+        ├── wrapper.h
+        ├── include/       # 厂商 C 头文件
         └── lib/
             ├── win32/
             └── win64/
@@ -86,11 +85,19 @@ HikCamera/
 
 ## 文档
 
-- `docs/c-sdk`：海康 C SDK 头文件说明
-- `docs/rust-sdk/system.md`：SDK 初始化、版本、设备入口
-- `docs/rust-sdk/device.md`：设备枚举和设备信息
-- `docs/rust-sdk/camera.md`：相机控制、取流、图像处理、录像
-- `docs/rust-sdk/error.md`：统一错误类型和 C SDK 返回码翻译
+在线站点（双语）由 `site/` 下的 Starlight 生成，本地预览：
+
+```sh
+just site install     # 首次
+just site dev         # 本地开发
+just site build       # 生成静态文件
+```
+
+主要分区：
+
+- **使用指南**：安装、快速开始、SDK 生命周期、设备选择、相机配置、采集、图像与视频写入
+- **开发者文档**：架构、错误模型、贡献
+- **参考**：运行时依赖、设备信息字段、C SDK 函数 / 结构体 / 像素格式 / 错误码
 
 ## 协议
 

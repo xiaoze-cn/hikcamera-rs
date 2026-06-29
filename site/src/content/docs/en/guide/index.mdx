@@ -1,0 +1,40 @@
+---
+title: Guide
+description: Use hikcamera-rs to enumerate devices, configure a camera, capture frames, and write images and video.
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+The Guide is organized by what you are trying to do, in the order most users
+hit each task for the first time.
+
+<CardGrid>
+  <LinkCard title="Installation" href="/guide/installation/" icon="seti:settings">
+    Set up `pixi`, `just`, and the libclang runtime, then verify a clean
+    workspace build.
+  </LinkCard>
+  <LinkCard title="Quick start" href="/guide/quick-start/" icon="seti:rocket">
+    Open the default device, set exposure and gain, capture a single frame,
+    and write it to disk.
+  </LinkCard>
+  <LinkCard title="SDK lifecycle" href="/guide/sdk-lifecycle/" icon="seti:clock">
+    How `HikCamera` initializes and finalizes the underlying C SDK through a
+    shared refcount.
+  </LinkCard>
+  <LinkCard title="Device selection" href="/guide/device-selection/" icon="seti:search">
+    Enumerate visible cameras and pick one by serial number, user name, IP, or
+    MAC address.
+  </LinkCard>
+  <LinkCard title="Camera configuration" href="/guide/camera-configuration/" icon="seti:config">
+    Set exposure, gain, pixel format, trigger mode, ROI, and any GenICam node
+    on the open device.
+  </LinkCard>
+  <LinkCard title="Streaming" href="/guide/streaming/" icon="seti:video">
+    Enter grabbing mode, pull frames with a timeout, and stop the stream
+    cleanly.
+  </LinkCard>
+  <LinkCard title="Image and video writers" href="/guide/image-and-video/" icon="seti:media">
+    Save single frames as BMP/JPEG/PNG/TIFF and record multi-frame clips to
+    AVI.
+  </LinkCard>
+</CardGrid>

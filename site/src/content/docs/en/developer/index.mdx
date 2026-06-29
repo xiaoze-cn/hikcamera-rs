@@ -1,0 +1,24 @@
+---
+title: Developer
+description: Architecture, error model, and contribution rules for hikcamera-rs maintainers and contributors.
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+These pages are for people who want to **change the wrapper**, not just use
+it. Read them in order before opening a non-trivial pull request.
+
+<CardGrid>
+  <LinkCard title="Architecture" href="/developer/architecture/" icon="seti:sitemap">
+    Why the workspace splits into `hikcamera-sys` and `hikcamera`, where
+    `unsafe` is allowed, and how the layered types own the C SDK lifecycle.
+  </LinkCard>
+  <LinkCard title="Error model" href="/developer/error-model/" icon="seti:warning">
+    How raw SDK status codes become a typed `HikCameraError`, the `Status`
+    newtype, and the constant lookup table.
+  </LinkCard>
+  <LinkCard title="Contributing" href="/developer/contributing/" icon="seti:puzzle">
+    Day-to-day `just` commands, formatting rules, language policy, and what
+    lefthook enforces on commit.
+  </LinkCard>
+</CardGrid>

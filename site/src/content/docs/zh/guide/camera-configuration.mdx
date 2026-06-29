@@ -1,0 +1,106 @@
+---
+title: 相机配置
+description: 在已打开的 Camera 上设置曝光、增益、像素格式、触发模式、ROI、帧率以及任意 GenICam 节点。
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+`Camera` 持有已打开设备的参数节点表。wrapper 给常用节点暴露了类型化 helper，
+另外提供一对通用 `get_node` / `set_node`，可以操作任意 GenICam 节点。
+
+## 类型化 helper
+
+| 域 | 读 / 写 | 底层节点 |
+| --- | --- | --- |
+| 曝光 | `get_exposure`, `set_exposure(f32)` | `ExposureTime`（Float） |
+| 曝光自动 | `get_exposure_auto`, `set_exposure_auto(AutoMode)` | `ExposureAuto`（Enum） |
+| 增益 | `get_gain`, `set_gain(f32)` | `Gain`（Float） |
+| 增益自动 | `get_gain_auto`, `set_gain_auto(AutoMode)` | `GainAuto`（Enum） |
+| ROI | `get_roi`, `set_roi(Roi)` | `Width`, `Height`, `OffsetX`, `OffsetY`（Int） |
+| 触发 | `get_trigger`, `set_trigger(Trigger)` | `TriggerMode`, `TriggerSource`, `TriggerActivation` |
+| 帧率 | `get_fps`, `set_fps(Fps)` | `AcquisitionFrameRateEnable`, `AcquisitionFrameRate` |
+| Gamma | `set_gamma(f32)` | 直接调 `MV_CC_SetGammaValue`（按像素格式分支）|
+| Bayer 转换 | `set_bayer_conversion(BayerOptions)` | `MV_CC_SetBayerCvtQuality`, `MV_CC_SetBayerFilterEnable` |
+| Bayer CCM | `set_bayer_ccm(CcmOptions)` | `MV_CC_SetBayerCCMParamEx` |
+| 流选项 | `set_stream(StreamOptions)` | `MV_CC_SetImageNodeNum`, `MV_CC_SetGrabStrategy`, `MV_CC_SetOutputQueueSize` |
+
+```rust
+let mut camera = device.open()?;
+
+camera.set_exposure(8000.0)?;             // us
+camera.set_gain(3.0)?;                    // dB
+camera.set_roi(Roi { width: 1920, height: 1080, offset_x: 0, offset_y: 0 })?;
+camera.set_trigger(Trigger::Off)?;        // 自由运行
+camera.set_fps(Fps::Target(30.0))?;
+```
+
+## 通用节点访问
+
+helper 没覆盖到的节点，用 `get_node` / `set_node` / `execute_node`：
+
+```rust
+use hikcamera::{NodeValue, NodeInput, NodeType};
+
+match camera.get_node("BalanceWhiteAuto")? {
+    NodeValue::Enum(value) => println!("current: {:?}", value.current),
+    NodeValue::Float(value) => println!("current: {}", value.current),
+    _ => {}
+}
+
+camera.set_node("BalanceWhiteAuto", "Once")?;
+camera.execute_node("BalanceWhiteAuto")?;   // 命令节点
+
+// 不确定节点类型时可以先看一下。
+match camera.node_type("UserSetSelector")? {
+    NodeType::Enum => { /* ... */ },
+    other => return Err(Error::unsupported_node("UserSetSelector", other.name()).into()),
+}
+```
+
+`NodeValue` 是读端 sum 类型，`NodeInput` 是写端 sum 类型。前面那些 helper 本质
+上就是 `get_node` / `set_node` 的类型化快捷方式。
+
+<Aside type="caution" title="类型不匹配会被显式报错">
+  把 Float 节点读成 Enum（或反过来）会返回
+  `HikCameraError::NodeValueMismatch`；把字符串写给 Int 节点会返回
+  `HikCameraError::NodeInputMismatch`。不会出现悄悄转换。
+</Aside>
+
+## 触发模式
+
+`Trigger` 是一个枚举，覆盖常见组合：
+
+| 变体 | 行为 |
+| --- | --- |
+| `Off` | 自由运行，帧率由 `AcquisitionFrameRate` 决定 |
+| `Software` | 帧等待 `camera.execute_node("TriggerSoftware")` 才出 |
+| `Hardware{ source, activation }` | 帧等待指定线缆上的电平触发 |
+
+```rust
+use hikcamera::Trigger;
+
+camera.set_trigger(Trigger::Software)?;
+// ... 后续你需要下一帧时：
+camera.execute_node("TriggerSoftware")?;
+// 然后 stream.take_frame(timeout) 就会返回那一帧。
+```
+
+## 帧率
+
+`Fps` 区分**目标**帧率和**设备上限**模式：
+
+```rust
+use hikcamera::Fps;
+
+camera.set_fps(Fps::Target(30.0))?;     // 请求 30 fps
+camera.set_fps(Fps::DeviceLimit)?;      // 让传感器跑自己的上限
+let current = camera.get_fps()?;
+```
+
+`get_fps` 会同时读 `AcquisitionFrameRateEnable` 和实际帧率，所以你能区分当前
+是受你的目标限制还是被设备本身卡住。
+
+## 下一步
+
+- 开始取帧 → [采集](/zh/guide/streaming/)。
+- 理解错误类型 → [错误模型](/zh/developer/error-model/)。

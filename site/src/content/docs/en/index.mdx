@@ -1,0 +1,51 @@
+---
+title: Overview
+description: Safe Rust bindings for HikCamera MVS industrial cameras.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import LifecycleStrip from '@components/LifecycleStrip.jsx';
+
+`hikcamera-rs` is a Windows-only Rust workspace that wraps the HikCamera MVS
+industrial camera C SDK. It exposes a small, typed surface that covers device
+enumeration, camera configuration, streaming, image/video writers, and a
+unified error model — while keeping `unsafe` strictly inside FFI boundaries.
+
+## Two crates
+
+<CardGrid>
+  <Card title="hikcamera-sys" icon="seti:rust">
+    Raw `bindgen` bindings generated from the vendor headers under
+    `crates/hikcamera-sys/include/`. Re-exported as `hikcamera::sys`.
+  </Card>
+  <Card title="hikcamera" icon="seti:rust">
+    Safe high-level wrapper. Public API lives in `crates/hikcamera/src/` and
+    covers system lifecycle, device enumeration, camera control, streaming,
+    image and video writers, and a unified error model.
+  </Card>
+</CardGrid>
+
+## Pick a starting point
+
+<CardGrid>
+  <LinkCard title="Install" href="/guide/installation/" icon="seti:settings">
+    Build the workspace with `pixi` + `just`.
+  </LinkCard>
+  <LinkCard title="Quick start" href="/guide/quick-start/" icon="seti:rocket">
+    Capture a frame in under five minutes.
+  </LinkCard>
+  <LinkCard title="Architecture" href="/developer/architecture/" icon="seti:sitemap">
+    Why the workspace is split the way it is.
+  </LinkCard>
+  <LinkCard title="Error model" href="/developer/error-model/" icon="seti:warning">
+    How SDK status codes become typed Rust errors.
+  </LinkCard>
+</CardGrid>
+
+## Lifecycle at a glance
+
+<LifecycleStrip locale="en" />
+
+Every entry above is a distinct Rust type, and each one owns a different
+phase of the underlying C SDK lifecycle. Reading the rest of the Guide in
+order roughly follows this stack from top to bottom.

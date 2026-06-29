@@ -1,0 +1,69 @@
+---
+title: ISP error codes
+description: MV_ALG_* status constants from MvISPErrorDefine.h returned by image/ISP operations.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import ConstantTable from '@components/ConstantTable.jsx';
+
+`MvISPErrorDefine.h` defines the `MV_ALG_*` family of status codes returned
+by ISP / image-processing paths in the SDK (`MV_CC_ISPProcess`,
+`MV_CC_ConvertPixelTypeEx` for some conversions, etc.). They use the same
+`0x80000000`-style encoding as the main error codes but a different numeric
+range, so they appear as a distinct group in the lookup table.
+
+## Common ISP algorithm errors
+
+<ConstantTable
+  locale="en"
+  rows={[
+    ["0x80000001", "MV_ALG_ERR", "ISP algorithm unknown error"],
+    ["0x80000002", "MV_ALG_E_ABILITY_ARG", "Ability argument invalid"],
+    ["0x80000003", "MV_ALG_E_MEM_NULL", "Memory address is null"],
+    ["0x80000004", "MV_ALG_E_MEM_ALIGN", "Memory alignment error"],
+    ["0x80000005", "MV_ALG_E_MEM_LACK", "Memory insufficient"],
+    ["0x80000006", "MV_ALG_E_IMG_FORMAT", "Image format invalid or unsupported"],
+    ["0x80000007", "MV_ALG_E_IMG_SIZE", "Image size invalid or out of range"],
+    ["0x80000008", "MV_ALG_E_IMG_STEP", "Image size does not match step"],
+    ["0x80000009", "MV_ALG_E_IMG_DATA_NULL", "Image data address is null"],
+    ["0x8000000A", "MV_ALG_E_CFG_TYPE", "Config type invalid"],
+    ["0x8000000B", "MV_ALG_E_CFG_SIZE", "Config size invalid"],
+    ["0x8000000C", "MV_ALG_E_PRC_TYPE", "Process type invalid"],
+    ["0x8000000D", "MV_ALG_E_PRC_SIZE", "Process size invalid"],
+    ["0x8000000E", "MV_ALG_E_FUNC_TYPE", "Sub-process type invalid"],
+    ["0x8000000F", "MV_ALG_E_FUNC_SIZE", "Sub-process size invalid"],
+    ["0x80000010", "MV_ALG_E_PARAM_INDEX", "Parameter index invalid"],
+    ["0x80000011", "MV_ALG_E_PARAM_VALUE", "Parameter value invalid or out of range"],
+    ["0x80000012", "MV_ALG_E_PARAM_NUM", "Parameter count invalid"],
+    ["0x80000013", "MV_ALG_E_NULL_PTR", "Pointer parameter is null"],
+    ["0x80000014", "MV_ALG_E_OVER_MAX_MEM", "Maximum memory limit exceeded"],
+    ["0x80000015", "MV_ALG_E_CALL_BACK", "Callback error"],
+    ["0x80000016", "MV_ALG_E_ENCRYPT", "Encryption error"],
+    ["0x80000017", "MV_ALG_E_EXPIRE", "License expired"],
+    ["0x80000018", "MV_ALG_E_BAD_ARG", "Argument range invalid"],
+    ["0x80000019", "MV_ALG_E_DATA_SIZE", "Data size invalid"],
+    ["0x8000001A", "MV_ALG_E_STEP", "Data step invalid"],
+    ["0x8000001B", "MV_ALG_E_CPUID", "CPU does not support required instruction set"],
+    ["0x8000001C", "MV_ALG_WARNING", "Algorithm warning"],
+    ["0x8000001D", "MV_ALG_E_TIME_OUT", "Algorithm timeout"],
+    ["0x8000001E", "MV_ALG_E_LIB_VERSION", "Library version error"],
+    ["0x8000001F", "MV_ALG_E_MODEL_VERSION", "Model version error"],
+    ["0x80000020", "MV_ALG_E_GPU_MEM_ALLOC", "GPU memory allocation failed"],
+    ["0x80000021", "MV_ALG_E_FILE_NON_EXIST", "File does not exist"],
+  ]}
+/>
+
+## Denoise / purple-fringe correction
+
+<Aside type="note" title="Algorithm-specific codes">
+  The denoise and purple-fringe-correction (PFC) sub-families
+  (`MV_ALG_E_DENOISE_*`, `MV_ALG_E_PFC_*`) live in the source header and
+  are typically only surfaced when calling those specific algorithm paths.
+  Browse them at:
+  [`crates/hikcamera-sys/include/MvISPErrorDefine.h`](https://github.com/xiaoze-cn/hikcamera-rs/blob/main/crates/hikcamera-sys/include/MvISPErrorDefine.h).
+</Aside>
+
+## See also
+
+- How these codes are surfaced in Rust → [Error model](/developer/error-model/).
+- General SDK error codes → [C SDK error codes](/reference/c-sdk/error-codes/).

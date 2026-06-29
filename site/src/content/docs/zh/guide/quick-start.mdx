@@ -1,0 +1,134 @@
+---
+title: 快速开始
+description: 用默认设备在五分钟内拍一张照片。
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+本走读从默认可见相机拍一张照片并保存为 BMP，走完整条栈：
+`HikCamera` → `Devices` → `Device` → `Camera` → `Stream` → `Frame` →
+`ImageWriter`。
+
+## 完整示例
+
+```rust
+use std::path::Path;
+use std::time::Duration;
+
+use hikcamera::{HikCamera, Rotation};
+
+const IMAGE_PATH: &str = "image.bmp";
+const TIMEOUT: Duration = Duration::from_secs(1);
+
+fn main() -> hikcamera::Result<()> {
+    let hik = HikCamera::new()?;
+
+    let devices = hik.devices()?;
+    let device = devices.default()?;
+    let mut camera = device.open()?;
+
+    camera.set_exposure(8000.0)?;
+    camera.set_gain(3.0)?;
+
+    let mut stream = camera.stream()?;
+    let frame = stream.take_frame(TIMEOUT)?;
+    let frame = stream.rotate_frame(&frame, Rotation::Angle180)?;
+
+    let mut output = stream.save_image(Path::new(IMAGE_PATH))?;
+    output.write_frame(&frame)?;
+    output.finish()?;
+
+    println!(
+        "captured image: {}x{}, {} bytes",
+        frame.info.width, frame.info.height, frame.data.len(),
+    );
+
+    let camera = stream.stop()?;
+    camera.close()?;
+    Ok(())
+}
+```
+
+## 分步说明
+
+<Steps>
+
+1. **初始化 SDK。** `HikCamera::new()` 在首个实例上调用
+   `MV_CC_Initialize`，并维护共享引用计数，让多个 `HikCamera` 能安全共存。
+
+2. **枚举设备。** `hik.devices()` 返回 `Devices` 集合，底层是
+   `MV_CC_EnumDevices` 跨 GigE + USB 传输层。
+
+3. **选一台。** `devices.default()` 取第一台。要跨重启稳定选中某台，建议用
+   `devices.serial_number("…")`，详见 [设备选择](/zh/guide/device-selection/)。
+
+4. **打开。** `device.open()` 依次调用 `MV_CC_CreateHandle` +
+   `MV_CC_OpenDevice`，返回持有参数节点表的 `Camera`。
+
+5. **配置参数。** `set_exposure`、`set_gain` 是对底层 GenICam 节点
+   （`ExposureTime`、`Gain`）的类型化封装。完整菜单看
+   [相机配置](/zh/guide/camera-configuration/)。
+
+6. **进入采集。** `camera.stream()` 消费 `Camera`，调用
+   `MV_CC_StartGrabbing`，返回 `Stream`。
+
+7. **取一帧。** `stream.take_frame(timeout)` 最多阻塞 `timeout` 等下一帧，
+   返回 `Frame`。底层 buffer 在 `Frame` 被 drop 时自动归还 SDK。
+
+8. **图像处理。** `stream.rotate_frame(&frame, Rotation::Angle180)` 返回一个
+   新 `Frame`，像素就地旋转 180 度——适合倒装相机。
+
+9. **写盘。** `stream.save_image(path)` 返回绑定到单个输出文件的
+   `ImageWriter`。调一次或多次 `write_frame(&frame)`，再 `finish()` 刷盘。
+
+10. **按顺序清理。** `stream.stop()` 调用 `MV_CC_StopGrabbing` 并交还
+    `Camera`。`camera.close()` 调用 `MV_CC_CloseDevice` +
+    `MV_CC_DestroyHandle`。最后一个 `HikCamera` 被 drop 时调用
+    `MV_CC_Finalize`。
+
+</Steps>
+
+## 真机运行
+
+<Aside type="danger" title="示例必须有真实相机">
+  `crates/hikcamera/examples/camera.rs` 会打开默认设备、拍一张静图、再录 10 秒
+  AVI。没有接相机的 CI / 环境里跑不起来。
+</Aside>
+
+通过 `just` 构建并运行（关于为什么必须经 `just`，见
+[安装](/zh/guide/installation/#始终通过-just-调用-cargo)）：
+
+```sh
+just build-examples
+# 先确认相机在 MVS 客户端里可见，然后：
+cargo run --package hikcamera --example camera
+```
+
+## 常见问题
+
+<Tabs>
+  <TabItem label="`HikCameraError::NoDevice`">
+    没枚举到任何相机。检查：
+
+    - 相机在 MVS 客户端里可见
+    - GigE 相机和主机网卡在同一个子网
+    - USB 相机没被别的进程占着（关掉 MVS 客户端）
+  </TabItem>
+  <TabItem label="`HikCameraError::Sdk { status: MV_E_NODATA }`">
+    `take_frame` 超时。常见原因：
+
+    - 触发模式开着但没触发信号（切回 `Trigger::Off`，详见
+      [相机配置](/zh/guide/camera-configuration/)）
+    - 曝光时间超过你给的 `timeout`
+    - 流在另一个线程被停止了
+  </TabItem>
+  <TabItem label="`MV_GIGE_DEVICE` 丢包">
+    把相机和主机网卡的 `MTU` 都调大，或调低 `AcquisitionFrameRate` 减带宽压力。
+  </TabItem>
+</Tabs>
+
+## 下一步
+
+- 跨重启锁定某台设备 → [设备选择](/zh/guide/device-selection/)。
+- 查看所有配置 helper → [相机配置](/zh/guide/camera-configuration/)。
+- 录视频 → [图像与视频写入](/zh/guide/image-and-video/)。

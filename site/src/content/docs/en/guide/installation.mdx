@@ -1,0 +1,142 @@
+---
+title: Installation
+description: Set up the build environment, fetch vendor DLLs, and verify a workspace build.
+---
+
+import { Aside, Steps, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
+import RecipeTable from '@components/RecipeTable.jsx';
+
+`hikcamera-rs` is Windows-only. The build needs `libclang` (for `bindgen`) and
+the MSVC toolchain (for linking the vendor import library). Both are wired up
+through `pixi`, so the developer flow is mostly one command.
+
+## Prerequisites
+
+<Aside type="note" title="What you need before opening the repo">
+  - Windows 10 / 11 (x64 or x86)
+  - The HikCamera MVS runtime installed system-wide, **or** the DLLs vendored
+    under `crates/hikcamera-sys/lib/` (already in the repo)
+  - [pixi](https://pixi.sh) on PATH
+  - [just](https://github.com/casey/just) on PATH
+</Aside>
+
+## 1. Clone and bootstrap
+
+<Steps>
+
+1. Clone the repository:
+
+   ```sh
+   git clone https://github.com/xiaoze-cn/hikcamera-rs
+   cd hikcamera-rs
+   ```
+
+2. Run setup once. This installs the pixi environment, copies a Windows-named
+   `libclang.dll` if only the versioned one is present, and registers
+   `lefthook` pre-commit hooks:
+
+   ```sh
+   just setup
+   ```
+
+3. Verify a clean build of the wrapper layer:
+
+   ```sh
+   just build
+   ```
+
+</Steps>
+
+## 2. Always invoke cargo through `just`
+
+Every `just` recipe sets `LIBCLANG_PATH` and prepends the pixi environment to
+`PATH`. Bare `cargo` will fail with `Unable to find libclang` because the
+environment is not configured.
+
+<Tabs>
+  <TabItem label="Common recipes">
+    <RecipeTable
+      locale="en"
+      rows={[
+        ["check", "`cargo check --workspace`"],
+        ["build", "`cargo build --workspace`"],
+        ["build-examples", "`cargo build --workspace --examples`"],
+        ["test", "`cargo test --workspace`"],
+        ["fmt-check", "`rustfmt` check (run before committing)"],
+        ["pre-commit", "`fmt-check` + `check` (what lefthook runs)"],
+        ["clean", "`cargo clean`"],
+      ]}
+    />
+  </TabItem>
+  <TabItem label="Ad-hoc cargo args">
+    Extra arguments after a recipe are forwarded to cargo:
+
+    ```sh
+    just test --lib error     # cargo test --workspace --lib error
+    ```
+
+    For anything not covered by a recipe, prefix the cargo invocation with the
+    `just` shell environment, or replicate the env vars from the `justfile`
+    header.
+  </TabItem>
+</Tabs>
+
+## 3. Project layout
+
+<FileTree>
+  - hikcamera-rs/
+    - crates/
+      - hikcamera/
+        - src/
+          - lib.rs
+          - system.rs
+          - device.rs
+          - camera.rs
+          - error.rs
+        - examples/
+      - hikcamera-sys/
+        - include/        (vendor C headers)
+        - lib/
+          - win32/
+          - win64/
+        - wrapper.h
+        - build.rs
+    - site/               (this documentation site)
+    - pixi.toml
+    - justfile
+    - AGENTS.md
+</FileTree>
+
+## 4. Add the wrapper to your crate
+
+<Tabs>
+  <TabItem label="Cargo.toml (git)">
+    ```toml
+    [dependencies]
+    hikcamera = { git = "https://github.com/xiaoze-cn/hikcamera-rs.git" }
+    ```
+  </TabItem>
+  <TabItem label="Windows-only target">
+    The crate links `MvCameraControl.lib` at build time and loads
+    `MvCameraControl.dll` at runtime. Both are vendored under
+    `crates/hikcamera-sys/lib/{win32,win64}/`, so consumers do **not** need
+    the MVS SDK installed system-wide to compile — only to run against a real
+    camera.
+
+    ```toml
+    [target.'cfg(windows)'.dependencies]
+    hikcamera = { git = "https://github.com/xiaoze-cn/hikcamera-rs.git" }
+    ```
+  </TabItem>
+</Tabs>
+
+<Aside type="caution" title="Bindgen rebuilds are slow">
+  `bindgen` parses the full MSVC + vendor header set. Don't touch
+  `crates/hikcamera-sys/wrapper.h`, `include/*.h`, or `build.rs` unless the
+  task is specifically about FFI — every change triggers a long rebuild.
+</Aside>
+
+## Next steps
+
+- Run a real capture with the [Quick start](/guide/quick-start/) example.
+- Understand the layered types in the [SDK lifecycle](/guide/sdk-lifecycle/).

@@ -74,8 +74,9 @@ just test --lib error     # cargo test --workspace --lib error
 
 ### Error handling
 
-See `docs/rust-sdk/error.md` for the design rationale. Short version for
-agents editing `error.rs`:
+See `/developer/error-model/` on the project site (or
+`site/src/content/docs/{en,zh}/developer/error-model.mdx` in the repo) for
+the design rationale. Short version for agents editing `error.rs`:
 
 - SDK status codes flow through the `Status(i32)` newtype — never as raw
   `i32` in signatures.
@@ -134,7 +135,7 @@ agents editing `error.rs`:
 
 ## Where to look for context
 
-- `docs/rust-sdk/*.md` — design notes for the safe wrapper, by module
-- `docs/c-sdk/` — annotated C SDK reference
+- `site/src/content/docs/{en,zh}/` — design notes for the safe wrapper,
+  built into the project site (run `just site dev` to view locally)
 - `crates/hikcamera-sys/include/` — original HikCamera MVS headers (the
   source of truth for behavior, parameter ranges, and error codes)

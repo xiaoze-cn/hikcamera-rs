@@ -1,0 +1,29 @@
+---
+title: Reference
+description: Lookup pages for runtime dependencies, device info fields, and the full HikCamera MVS C SDK header set.
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+These pages exist to be **searched**, not read end-to-end. Jump in when you
+need to remember a field name, a constant value, or which DLLs ship with the
+wrapper.
+
+<CardGrid>
+  <LinkCard title="Runtime dependencies" href="/reference/runtime-dependencies/" icon="seti:package">
+    Interactive map of which vendor DLLs are kept, which are removed, and how
+    the C headers reach the final Rust binary.
+  </LinkCard>
+  <LinkCard title="Device info fields" href="/reference/device-info-fields/" icon="seti:table">
+    Full field reference for `DeviceInfo`, including transport-specific fields
+    for GigE, USB, and GenTL devices.
+  </LinkCard>
+  <LinkCard title="C SDK reference" href="/reference/c-sdk/functions/" icon="seti:c">
+    Function, struct, enum, pixel-type, error-code, and obsolete-interface
+    listings straight from the vendor headers under
+    `crates/hikcamera-sys/include/`.
+  </LinkCard>
+</CardGrid>
+
+If you are looking for behavioral explanations instead of field listings, the
+[Guide](/guide/) is the better starting point.

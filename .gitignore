@@ -1,3 +1,6 @@
 target/
 .pixi/
 crates/hikcamera/examples/datas/
+site/.astro/
+site/dist/
+site/node_modules/

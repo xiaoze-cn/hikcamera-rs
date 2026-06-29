@@ -28,6 +28,8 @@ fmt-check:
 
 pre-commit: fmt-check check
 
+mod site
+
 clean:
     cargo clean
 
