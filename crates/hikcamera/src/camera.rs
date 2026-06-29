@@ -7,7 +7,7 @@ use std::ptr::NonNull;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use crate::{Error, HikCamera, Result, error::check, sys};
+use crate::{HikCamera, HikCameraError, Result, error::check, sys};
 
 #[derive(Debug)]
 pub struct Camera<'hik> {
@@ -453,7 +453,7 @@ impl<'hik> Camera<'hik> {
             NodeType::Float => get_float_node(self.handle(), key).map(NodeValue::Float),
             NodeType::String => get_string_node(self.handle(), key).map(NodeValue::String),
             NodeType::Enum => get_enum_node(self.handle(), key).map(NodeValue::Enum),
-            kind => Err(Error::UnsupportedNode {
+            kind => Err(HikCameraError::UnsupportedNode {
                 key: key.to_owned(),
                 kind: kind.name(),
             }),
@@ -477,11 +477,11 @@ impl<'hik> Camera<'hik> {
             (NodeType::Enum, NodeInput::EnumSymbol(value)) => {
                 select_enum_with_text(self.handle(), key, value.as_str())
             }
-            (NodeType::Command, _) => Err(Error::UnsupportedNode {
+            (NodeType::Command, _) => Err(HikCameraError::UnsupportedNode {
                 key: key.to_owned(),
                 kind: kind.name(),
             }),
-            (kind, value) => Err(Error::NodeInputMismatch {
+            (kind, value) => Err(HikCameraError::NodeInputMismatch {
                 key: key.to_owned(),
                 expected: kind.input_name(),
                 actual: value.name(),
@@ -811,7 +811,7 @@ impl VideoWriter {
 
     pub fn finish(mut self) -> Result<Video> {
         if self.frame_count == 0 {
-            return Err(Error::EmptyVideo);
+            return Err(HikCameraError::EmptyVideo);
         }
 
         self.stop()?;
@@ -837,7 +837,7 @@ impl VideoWriter {
 
     fn start(&mut self, frame: &Frame) -> Result<()> {
         if self.recording.get() {
-            return Err(Error::RecordingInProgress);
+            return Err(HikCameraError::RecordingInProgress);
         }
         validate_frame(frame)?;
 
@@ -1156,7 +1156,7 @@ impl NodeValue {
     pub fn as_int(&self) -> Result<&IntValue> {
         match self {
             Self::Int(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "Int",
                 actual: other.name(),
             }),
@@ -1166,7 +1166,7 @@ impl NodeValue {
     pub fn into_int(self) -> Result<IntValue> {
         match self {
             Self::Int(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "Int",
                 actual: other.name(),
             }),
@@ -1176,7 +1176,7 @@ impl NodeValue {
     pub fn as_float(&self) -> Result<&FloatValue> {
         match self {
             Self::Float(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "Float",
                 actual: other.name(),
             }),
@@ -1186,7 +1186,7 @@ impl NodeValue {
     pub fn into_float(self) -> Result<FloatValue> {
         match self {
             Self::Float(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "Float",
                 actual: other.name(),
             }),
@@ -1196,7 +1196,7 @@ impl NodeValue {
     pub fn as_enum(&self) -> Result<&EnumValue> {
         match self {
             Self::Enum(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "Enum",
                 actual: other.name(),
             }),
@@ -1206,7 +1206,7 @@ impl NodeValue {
     pub fn into_enum(self) -> Result<EnumValue> {
         match self {
             Self::Enum(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "Enum",
                 actual: other.name(),
             }),
@@ -1216,7 +1216,7 @@ impl NodeValue {
     pub fn as_bool(&self) -> Result<bool> {
         match self {
             Self::Bool(value) => Ok(*value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "Bool",
                 actual: other.name(),
             }),
@@ -1226,7 +1226,7 @@ impl NodeValue {
     pub fn into_bool(self) -> Result<bool> {
         match self {
             Self::Bool(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "Bool",
                 actual: other.name(),
             }),
@@ -1236,7 +1236,7 @@ impl NodeValue {
     pub fn as_string(&self) -> Result<&StringValue> {
         match self {
             Self::String(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "String",
                 actual: other.name(),
             }),
@@ -1246,7 +1246,7 @@ impl NodeValue {
     pub fn into_string(self) -> Result<StringValue> {
         match self {
             Self::String(value) => Ok(value),
-            other => Err(Error::NodeValueMismatch {
+            other => Err(HikCameraError::NodeValueMismatch {
                 expected: "String",
                 actual: other.name(),
             }),
@@ -1721,7 +1721,7 @@ fn pixel_size(width: u32, height: u32, pixel_type: u32) -> Result<u32> {
 
 fn u16_value(value: u32) -> Result<u16> {
     if value > u16::MAX as u32 {
-        Err(Error::ValueOutOfRange {
+        Err(HikCameraError::ValueOutOfRange {
             field: "frame dimension",
         })
     } else {
@@ -1731,7 +1731,7 @@ fn u16_value(value: u32) -> Result<u16> {
 
 fn validate_frame(frame: &Frame) -> Result<()> {
     if frame.data.is_empty() || frame.info.frame_len == 0 {
-        Err(Error::EmptyFrame)
+        Err(HikCameraError::EmptyFrame)
     } else {
         Ok(())
     }
@@ -1739,7 +1739,7 @@ fn validate_frame(frame: &Frame) -> Result<()> {
 
 fn validate_duration(field: &'static str, duration: Duration) -> Result<()> {
     if duration.is_zero() {
-        Err(Error::InvalidDuration { field })
+        Err(HikCameraError::InvalidDuration { field })
     } else {
         Ok(())
     }
@@ -1749,13 +1749,13 @@ fn validate_frame_rate(field: &'static str, frame_rate: f32) -> Result<()> {
     if frame_rate.is_finite() && frame_rate > 0.0 {
         Ok(())
     } else {
-        Err(Error::InvalidFrameRate { field })
+        Err(HikCameraError::InvalidFrameRate { field })
     }
 }
 
 fn validate_roi(roi: Roi) -> Result<()> {
     if roi.width == 0 || roi.height == 0 {
-        Err(Error::InvalidRoi)
+        Err(HikCameraError::InvalidRoi)
     } else {
         Ok(())
     }
@@ -1782,17 +1782,17 @@ fn len_u32(value: usize) -> Result<u32> {
     }
 }
 
-fn uint32_error() -> Error {
-    Error::ValueOutOfRange { field: "u32 value" }
+fn uint32_error() -> HikCameraError {
+    HikCameraError::ValueOutOfRange { field: "u32 value" }
 }
 
 fn path_string(path: &Path) -> Result<CString> {
     CString::new(path.to_string_lossy().as_bytes())
-        .map_err(|_| Error::InvalidString { field: "path" })
+        .map_err(|_| HikCameraError::InvalidString { field: "path" })
 }
 
 fn key_string(value: &str, field: &'static str) -> Result<CString> {
-    CString::new(value).map_err(|_| Error::InvalidString { field })
+    CString::new(value).map_err(|_| HikCameraError::InvalidString { field })
 }
 
 fn c_text(bytes: &[std::os::raw::c_char]) -> String {

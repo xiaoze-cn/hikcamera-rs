@@ -121,35 +121,35 @@ MV_CC_DEVICE_INFO
 
 - `default()`
   - 默认选择枚举结果里的第一台设备
-  - 如果没有设备，返回 `Error::NoDevice`
+  - 如果没有设备，返回 `HikCameraError::NoDevice`
 
 - `serial_number(value)`
   - 按序列号精确查找设备
   - 推荐作为固定设备的优先选择方式
   - 序列号通常比 IP 更稳定，也不依赖用户自定义名称
-  - 如果找不到，返回 `Error::DeviceNotFound`
-  - 如果匹配到多台，返回 `Error::MultipleDevices`
+  - 如果找不到，返回 `HikCameraError::DeviceNotFound`
+  - 如果匹配到多台，返回 `HikCameraError::MultipleDevices`
 
 - `user_name(value)`
   - 按用户自定义名称精确查找设备
   - 适合现场给相机配置了可读名称的场景，例如 `left-camera`
-  - 如果找不到，返回 `Error::DeviceNotFound`
-  - 如果匹配到多台，返回 `Error::MultipleDevices`
+  - 如果找不到，返回 `HikCameraError::DeviceNotFound`
+  - 如果匹配到多台，返回 `HikCameraError::MultipleDevices`
 
 - `ip(value)`
   - 按 GigE 当前 IP 精确查找设备
   - 主要用于 GigE 网络相机
   - 如果设备 IP 可能变化，优先考虑 `serial_number(value)`
-  - 如果找不到，返回 `Error::DeviceNotFound`
-  - 如果匹配到多台，返回 `Error::MultipleDevices`
+  - 如果找不到，返回 `HikCameraError::DeviceNotFound`
+  - 如果匹配到多台，返回 `HikCameraError::MultipleDevices`
 
 - `mac(value)`
   - 按设备 MAC 地址精确查找设备
   - 主要用于 GigE 或带 MAC 信息的传输层设备
   - USB 设备通常没有 MAC 信息
   - 匹配时忽略大小写
-  - 如果找不到，返回 `Error::DeviceNotFound`
-  - 如果匹配到多台，返回 `Error::MultipleDevices`
+  - 如果找不到，返回 `HikCameraError::DeviceNotFound`
+  - 如果匹配到多台，返回 `HikCameraError::MultipleDevices`
 
 - `IntoIterator`
   - `Devices` 可以被消费成设备迭代器

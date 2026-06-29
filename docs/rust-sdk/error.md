@@ -4,7 +4,7 @@
 
 这个文件负责统一 Rust 高层 SDK 的错误类型。
 
-不管错误来自海康 C SDK 返回码，还是来自 Rust 封装层自己的显式检查，都统一返回 `Error`。
+不管错误来自海康 C SDK 返回码，还是来自 Rust 封装层自己的显式检查，都统一返回 `HikCameraError`。
 
 对应 C SDK：
 
@@ -25,8 +25,7 @@ MvISPErrorDefine.h
 - `HikCameraError`
   - Rust 高层 SDK 的统一错误类型
   - 使用 `thiserror` 派生 `Display` 和 `std::error::Error`
-  - `Error` 是兼容旧用法的类型别名：`type Error = HikCameraError`
-  - `Sdk { code }` 表示 C SDK 返回码错误
+  - `Sdk { status }` 表示 C SDK 返回码错误
   - `NoDevice` 表示没有枚举到任何设备
   - `DeviceNotFound` 表示按指定条件没有找到设备
   - `MultipleDevices` 表示按指定条件匹配到多台设备
@@ -57,7 +56,7 @@ MvISPErrorDefine.h
 
 ## 提供的函数
 
-- `Error::code()`
+- `HikCameraError::code()`
   - SDK 错误返回 `Some(i32)`
   - Rust 封装层错误返回 `None`
   - 用于日志、调试，或者对照海康官方文档
@@ -69,31 +68,13 @@ MvISPErrorDefine.h
   - crate 内部使用
   - 把 C SDK 返回码转换成 Rust 的 `Result<()>`
   - `MV_OK` 返回 `Ok(())`
-  - 非 `MV_OK` 返回 `Err(Error::Sdk { code })`
+  - 非 `MV_OK` 返回 `Err(HikCameraError::Sdk { status })`
 
-- `Error::sdk(code)`
-  - crate 内部使用
-  - 从 C SDK 返回码创建 SDK 错误
-
-- `Error::device_not_found(selector)`
-  - crate 内部使用
-  - 创建设备查找失败错误
-
-- `Error::multiple_devices(selector, count)`
-  - crate 内部使用
-  - 创建设备匹配数量不唯一错误
-
-- 其他 crate 内部构造函数
-  - `invalid_string(field)`：创建字符串无法传给 C SDK 的错误
-  - `unsupported_node(key, kind)`：创建不支持的节点类型错误
-  - `node_value_mismatch(expected, actual)`：创建节点读取类型不匹配错误
-  - `node_input_mismatch(key, expected, actual)`：创建节点写入类型不匹配错误
-  - `value_out_of_range(field)`：创建封装层数值越界错误
-  - `recording_in_progress()`：创建重复录像错误
+- wrapper 层错误直接构造对应的 `HikCameraError` enum variant，不再维护内部薄封装构造函数。
 
 ## Display 输出
 
-`Error` 的 `Display` 和 `std::error::Error` 实现由 `thiserror` 派生，输出内容保持为面向日志和调试的英文信息。
+`HikCameraError` 的 `Display` 和 `std::error::Error` 实现由 `thiserror` 派生，输出内容保持为面向日志和调试的英文信息。
 
 - SDK 错误格式
   - `状态码名称 (十进制状态码, 十六进制状态码): 英文说明`

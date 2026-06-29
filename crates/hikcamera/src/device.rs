@@ -1,7 +1,7 @@
 use std::fmt;
 use std::mem::MaybeUninit;
 
-use crate::{Camera, Error, HikCamera, Result, error::check, sys};
+use crate::{Camera, HikCamera, HikCameraError, Result, error::check, sys};
 
 #[derive(Clone)]
 pub struct Devices<'hik> {
@@ -153,7 +153,7 @@ impl<'hik> Devices<'hik> {
 
     pub fn default(mut self) -> Result<Device<'hik>> {
         if self.items.is_empty() {
-            return Err(Error::NoDevice);
+            return Err(HikCameraError::NoDevice);
         }
 
         Ok(self.items.remove(0))
@@ -194,12 +194,12 @@ impl<'hik> Devices<'hik> {
     ) -> Result<Device<'hik>> {
         let mut matched = self.items.into_iter().filter(|device| matches(device));
         let Some(device) = matched.next() else {
-            return Err(Error::DeviceNotFound { selector });
+            return Err(HikCameraError::DeviceNotFound { selector });
         };
 
         let extra = matched.count();
         if extra > 0 {
-            return Err(Error::MultipleDevices {
+            return Err(HikCameraError::MultipleDevices {
                 selector,
                 count: extra + 1,
             });

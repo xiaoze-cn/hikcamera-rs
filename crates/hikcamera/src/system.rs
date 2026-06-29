@@ -1,7 +1,7 @@
 use std::ptr::{self, NonNull};
 use std::sync::Mutex;
 
-use crate::{Camera, Device, Devices, Error, Result, error::check, sys};
+use crate::{Camera, Device, Devices, HikCameraError, Result, error::check, sys};
 
 static SDK_REF_COUNT: Mutex<usize> = Mutex::new(0);
 
@@ -21,7 +21,9 @@ pub struct HikVersion {
 
 impl HikCamera {
     pub fn new() -> Result<Self> {
-        let mut users = SDK_REF_COUNT.lock().map_err(|_| Error::SdkStatePoisoned)?;
+        let mut users = SDK_REF_COUNT
+            .lock()
+            .map_err(|_| HikCameraError::SdkStatePoisoned)?;
 
         if *users == 0 {
             check(unsafe { sys::MV_CC_Initialize() })?;
@@ -44,7 +46,7 @@ impl HikCamera {
         check(unsafe { sys::MV_CC_CreateHandle(&mut handle, device.raw()) })?;
 
         let Some(handle) = NonNull::new(handle.cast()) else {
-            return Err(Error::NullHandle);
+            return Err(HikCameraError::NullHandle);
         };
 
         if let Err(error) =
