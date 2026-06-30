@@ -2,31 +2,31 @@ use super::*;
 
 #[test]
 fn ok_code() {
-    assert!(check(sys::MV_OK as i32).is_ok());
+    assert!(check(sys::MV_OK).is_ok());
 }
 
 #[test]
 fn status_ok() {
     assert!(Status::OK.is_ok());
     assert!(Status(0).is_ok());
-    assert!(!Status(sys::MV_E_NODATA as i32).is_ok());
+    assert!(!Status(sys::MV_E_NODATA).is_ok());
 }
 
 #[test]
 fn status_display() {
-    let s = Status(sys::MV_E_LOAD_LIBRARY as i32);
+    let s = Status(sys::MV_E_LOAD_LIBRARY);
     assert_eq!(s.to_string(), "MV_E_LOAD_LIBRARY (-2147483636, 0x8000000C)");
 }
 
 #[test]
 fn sdk_error() {
-    let status = Status(sys::MV_E_NODATA as i32);
+    let status = Status(sys::MV_E_NODATA);
     let error = HikCameraError::Sdk { status };
 
     assert_eq!(status.info().name, "MV_E_NODATA");
     assert_eq!(status.info().message, "Timeout or no data received");
-    assert_eq!(error.code(), Some(sys::MV_E_NODATA as i32));
-    assert_eq!(check(sys::MV_E_NODATA as i32), Err(error));
+    assert_eq!(error.code(), Some(sys::MV_E_NODATA));
+    assert_eq!(check(sys::MV_E_NODATA), Err(error));
 }
 
 #[test]
@@ -42,7 +42,7 @@ fn unknown_sdk_error() {
 #[test]
 fn display_sdk_error() {
     let error = HikCameraError::Sdk {
-        status: Status(sys::MV_E_LOAD_LIBRARY as i32),
+        status: Status(sys::MV_E_LOAD_LIBRARY),
     };
 
     assert_eq!(

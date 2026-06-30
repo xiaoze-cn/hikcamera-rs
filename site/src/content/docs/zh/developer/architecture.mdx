@@ -103,7 +103,9 @@ flowchart LR
 | `device.rs` | `Device` / `Devices` / `DeviceInfo` / `Transport` |
 | `camera.rs` | `Camera`、`Stream`、`Frame`、所有节点表访问器、图像/视频 writer |
 
-`hikcamera-sys/src/lib.rs` 是一行 `include!`——没有自己的逻辑。
+`hikcamera-sys/src/lib.rs` 是一个薄模块，从 `OUT_DIR` 里 `include!()` 两份生成
+文件（先 `status_codes.rs`，再 `bindings.rs`）。它没有自己的逻辑——至于为什么
+输出要拆成两份，见[绑定生成](/zh/developer/bindings-generation/)。
 
 ## 为什么这么拆？
 
@@ -117,5 +119,6 @@ flowchart LR
 
 ## 下一步
 
+- 绑定是如何生成的（状态码 vs `bindgen` 输出） → [绑定生成](/zh/developer/bindings-generation/)。
 - 错误如何被类型化 → [错误模型](/zh/developer/error-model/)。
 - 如何贡献 → [贡献](/zh/developer/contributing/)。

@@ -1,0 +1,193 @@
+---
+title: Bindings generation
+description: How build.rs splits the SDK header into bindgen output and a hand-rolled status-code module, and why the split exists.
+---
+
+import { Card, Steps, Aside } from '@astrojs/starlight/components';
+
+`hikcamera-sys` is not pure `bindgen` output. The build script (`crates/hikcamera-sys/build.rs`)
+deliberately runs **two** generators in parallel and merges their results. This page explains
+why the split exists and what traps it avoids, so you don't undo it by accident.
+
+## The one-sentence version
+
+The SDK declares two different kinds of `#define` constants that need two different Rust
+types, and `bindgen` cannot tell them apart. We let `bindgen` handle the part it is good at
+and generate the rest ourselves.
+
+## What the SDK actually declares
+
+Every HikCamera MVS header constant is a bare integer literal with no type annotation:
+
+```c
+// MvErrorDefine.h
+#define MV_OK             0x00000000
+#define MV_E_HANDLE       0x80000000
+#define MV_E_NODATA       0x80000007
+
+// MvCameraControl.h
+#define MV_ACCESS_Exclusive   0x00000000
+#define MV_ACCESS_Monitor     0x00000001
+```
+
+But they are used in two **structurally different** contexts:
+
+| Kind | Used as | C type at the use site | Natural Rust type |
+| --- | --- | --- | --- |
+| Status codes (`MV_OK`, `MV_E_*`, `MV_ALG_*`) | Compared against SDK function return values | `int` (signed) | `i32` |
+| Enum-parameter values (`MV_ACCESS_*`, pixel formats, trigger modes) | Passed as function arguments | `unsigned int` | `u32` |
+
+The HikCamera SDK follows the C convention "function returns `int`, `0` means success,
+negative values mean errors" — so `0x80000000` is **designed** to read as `-2147483648`
+when stored in a signed `int`. The C compiler does this implicit wrap silently.
+
+## Why bindgen alone is not enough
+
+`bindgen` sees the bare `0x80000000` literal and refuses to emit it as `i32`:
+
+```
+error: literal out of range for `i32`
+   --> bindings.rs:227
+    |
+227 | pub const MV_E_LIQUIDLENS_UNDEFINED_ERROR: i32 = 2147485439;
+    |                                                     ^^^^^^^^^^
+    = note: the literal `2147485439` does not fit into the type `i32` whose
+            range is `-2147483648..=2147483647`
+```
+
+Rust, unlike C, does not silently wrap integer literals. Every `bindgen` option that
+*could* produce `i32` constants trips this error:
+
+<Steps>
+
+1. **`MacroTypeVariation::Signed` (global)** — forces *every* macro constant to `i32`,
+   but `bindgen` then tries to fit `MV_ACCESS_Exclusive`-style values into `i32` too,
+   and they exceed `i32::MAX` once the SDK evolves. Also: even when values do fit,
+   `bindgen` reports `literal out of range` for `0x80000000`-style status codes.
+2. **`ParseCallbacks::int_macro` (per-macro override)** — lets you return `IntKind::I32`
+   for status codes only. Theoretically perfect, **but `bindgen` still hits the same
+   `literal out of range` error** when emitting them. The callback only controls *which*
+   type `bindgen` tries to use; it doesn't lift the range check.
+3. **`IntKind::Custom`** — same problem. `bindgen` does not re-encode the literal; it
+   just stamps a different type name on the same out-of-range value.
+
+</Steps>
+
+The root cause is that `bindgen` treats integer literals as mathematical values, not bit
+patterns. There is no `bindgen` option that says "treat `0x80000000` as the bit pattern
+that `i32` represents as `-2147483648`". You have to do that re-encoding yourself.
+
+<Aside type="note" title="Why not negative literals directly?">
+You could hand-write `pub const MV_E_HANDLE: i32 = -2147483648;` and that works. But the
+original hex form `0x80000000` is what every HikCamera SDK document, error table, and
+support article uses. Throwing it away makes debugging harder. The `_u32 as i32` re-encode
+preserves the hex form **and** produces a valid `i32` constant.
+</Aside>
+
+## How `build.rs` actually solves it
+
+```mermaid
+flowchart LR
+    subgraph SDK["SDK headers (read-only)"]
+        MvErr["MvErrorDefine.h<br/>MvISPErrorDefine.h<br/>(status codes)"]
+        Other["MvCameraControl.h<br/>CameraParams.h<br/>PixelType.h<br/>(functions, structs,<br/>enum-parameter values)"]
+    end
+
+    subgraph BR["build.rs"]
+        Regex["generate_status_codes()<br/>regex parses #define lines,<br/>emits 0x80000000_u32 as i32"]
+        BG["bindgen::Builder<br/>.blocklist_file(MvErrorDefine.h)<br/>.blocklist_file(MvISPErrorDefine.h)"]
+    end
+
+    subgraph OUT["OUT_DIR (consumed by src/lib.rs)"]
+        SC["status_codes.rs<br/>(MV_OK, MV_E_*, MV_ALG_*<br/>as i32)"]
+        B["bindings.rs<br/>(functions, structs,<br/>MV_ACCESS_* as u32)"]
+    end
+
+    subgraph REV["target/generated/<br/>(stable-path review copies)"]
+        SC2["status_codes.rs"]
+        B2["bindings.rs"]
+    end
+
+    MvErr --> Regex --> SC
+    MvErr -.-"blocklisted"-.-> BG
+    Other --> BG --> B
+
+    SC --> SC2
+    B --> B2
+```
+
+The build script runs two independent generators:
+
+1. **`generate_status_codes()`** — a 20-line regex pass over `MvErrorDefine.h` +
+   `MvISPErrorDefine.h` that emits one `pub const NAME: i32 = 0x80000000_u32 as i32;` per
+   `#define`. The `_u32 as i32` is Rust's explicit version of C's implicit `int` wrap.
+2. **`bindgen::Builder`** with `.blocklist_file(r".*MvErrorDefine\.h")` and the same for
+   `MvISPErrorDefine.h`. `bindgen` does not even *parse* those two headers, so it cannot
+   double-emit the constants.
+
+Both outputs land in `OUT_DIR/` (consumed by `include!()` in `src/lib.rs`) **and** in
+`target/generated/` (stable-path review copies for diffing across SDK upgrades).
+
+## Invariants this design preserves
+
+<Card icon="seti:lock" title="Type symmetry">
+Every SDK function returns `c_int` (`i32`). Every status-code constant is `i32`. Every
+status-code comparison in the wrapper is therefore cast-free: `if status == sys::MV_E_HANDLE`
+just type-checks. Enum-parameter constants stay `u32` to match the SDK's `unsigned int`
+parameters. Zero casts live at the FFI boundary in the entire wrapper.
+</Card>
+
+<Card icon="seti:gear" title="Single source of truth">
+The status-code list is read directly from `MvErrorDefine.h` + `MvISPErrorDefine.h`. There
+is no hand-maintained table to drift. Upgrading the vendored SDK and re-running
+`cargo build` regenerates `status_codes.rs` automatically.
+</Card>
+
+<Card icon="seti:warning" title="Loud failure on SDK changes">
+If a future HikCamera SDK adds a *new* status-code header outside the current blocklist,
+`bindgen` will emit those constants as `u32` and the wrapper will fail to compile where it
+compares them against the `i32` return value. This is the intended behaviour — silent
+type fallback would hide the gap.
+</Card>
+
+<Card icon="seti:eye" title="Observable output">
+`target/generated/{bindings,status_codes}.rs` are stable-path copies of exactly what
+`src/lib.rs` `include!()`s. After an SDK upgrade, `git diff`-style comparison against the
+previous build's review copy shows every binding change at a glance.
+</Card>
+
+## What *not* to do
+
+<Aside type="danger" title="Don't add an `int_macro` callback as a 'safety net'">
+An earlier version of this build script registered a `ParseCallbacks` impl that returned
+`IntKind::I32` for status-code prefixes, "just in case" a status-code macro slipped past
+the blocklist. **This is harmful.** If `bindgen` ever does emit a status code as `i32`
+*and* `generate_status_codes()` also emits it, the build fails with `E0428: name defined
+multiple times` — exactly the loud failure we want. A callback that silently picked the
+`i32` type would mask the configuration drift instead.
+</Aside>
+
+<Aside type="danger" title="Don't try to mark types inside wrapper.h">
+It is tempting to add a `typedef enum { ... } HikStatusCode;` block to `wrapper.h` listing
+every status code, hoping `bindgen` will then emit them as the enum's underlying integer
+type. This (a) duplicates the list of status codes into a hand-maintained C source,
+(b) relies on `bindgen`'s unstable treatment of enum constants, and (c) gets you the same
+`literal out of range` error because the enum initializer `MV_E_HANDLE` is still the raw
+`0x80000000` literal. The build-script generator avoids all three problems.
+</Aside>
+
+## Where to look in the source
+
+| File | What it does |
+| --- | --- |
+| `crates/hikcamera-sys/build.rs` | Drives both generators, writes outputs to `OUT_DIR` and `target/generated/`. |
+| `crates/hikcamera-sys/src/lib.rs` | Two `include!()` calls (status codes first, then bindgen output). The crate-level doc summarises the split for IDE hover. |
+| `target/generated/status_codes.rs` | Review copy of the generated status-code constants. |
+| `target/generated/bindings.rs` | Review copy of the bindgen output. |
+| `crates/hikcamera-sys/include/MvErrorDefine.h` | Upstream source of truth for status codes. Do not edit. |
+| `crates/hikcamera/src/error.rs` | The `Status(pub i32)` newtype, `check()` entry point, and `SDK_ERRORS` lookup table — all typed `i32` to match the generated constants. |
+
+## Next steps
+
+- How `Status` becomes `HikCameraError` → [Error model](/developer/error-model/).
+- Where `unsafe` is allowed in the wrapper → [Architecture](/developer/architecture/).

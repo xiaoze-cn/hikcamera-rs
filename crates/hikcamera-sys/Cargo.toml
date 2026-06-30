@@ -13,8 +13,6 @@ links = "MvCameraControl"
 [lib]
 doctest = false
 
-[dependencies]
-
 [build-dependencies]
 bindgen = "0.72"
-target-lexicon = "0.13.5"
+regex = "1"

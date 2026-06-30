@@ -13,6 +13,10 @@ import { CardGrid, LinkCard } from '@astrojs/starlight/components';
     为什么 workspace 拆成 `hikcamera-sys` 和 `hikcamera`、`unsafe` 的边界、
     分层类型如何持有 C SDK 生命周期。
   </LinkCard>
+  <LinkCard title="绑定生成" href="/zh/developer/bindings-generation/" icon="seti:c">
+    `build.rs` 如何把 SDK 头文件拆成 `bindgen` 输出和手写的状态码模块、
+    为什么这么拆、避开了哪些坑。改 `build.rs` 之前必读。
+  </LinkCard>
   <LinkCard title="错误模型" href="/zh/developer/error-model/" icon="seti:warning">
     原始 SDK 状态码如何变成有类型的 `HikCameraError`、`Status` newtype、以及
     常量查找表的设计。

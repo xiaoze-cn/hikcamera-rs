@@ -1,0 +1,191 @@
+---
+title: 绑定生成
+description: build.rs 如何把 SDK 头文件拆成 bindgen 输出和手写的状态码模块，以及为什么这么拆。
+---
+
+import { Card, Steps, Aside } from '@astrojs/starlight/components';
+
+`hikcamera-sys` **不是**纯 `bindgen` 输出。构建脚本（`crates/hikcamera-sys/build.rs`）
+有意并行运行**两个**生成器并把结果合并起来。本页解释这个拆分存在的理由，以及它
+避开了哪些坑——以免你不小心把它改回去。
+
+## 一句话版本
+
+SDK 声明了**两种语义不同**的 `#define` 常量，需要两种不同的 Rust 类型，而
+`bindgen` 无法区分它们。我们让 `bindgen` 处理它擅长的部分，剩下的我们自己生成。
+
+## SDK 实际声明了什么
+
+HikCamera MVS 头文件里每个常量都是不带类型标注的纯整数字面量：
+
+```c
+// MvErrorDefine.h
+#define MV_OK             0x00000000
+#define MV_E_HANDLE       0x80000000
+#define MV_E_NODATA       0x80000007
+
+// MvCameraControl.h
+#define MV_ACCESS_Exclusive   0x00000000
+#define MV_ACCESS_Monitor     0x00000001
+```
+
+但它们用在**两种结构上完全不同**的场景里：
+
+| 类别 | 用法 | 使用处的 C 类型 | 自然对应的 Rust 类型 |
+| --- | --- | --- | --- |
+| 状态码（`MV_OK`、`MV_E_*`、`MV_ALG_*`） | 与 SDK 函数返回值比较 | `int`（有符号） | `i32` |
+| 枚举值参数（`MV_ACCESS_*`、像素格式、触发模式） | 作为函数参数传入 | `unsigned int` | `u32` |
+
+HikCamera SDK 遵循 C 语言惯例"函数返回 `int`，`0` 表示成功，负数表示错误"——所以
+`0x80000000` **被设计成**当 `int` 读取时等于 `-2147483648`。C 编译器会做这个
+implicit wrap，不声不响。
+
+## 为什么单靠 bindgen 不够
+
+`bindgen` 看到裸的 `0x80000000` 字面量，拒绝把它输出为 `i32`：
+
+```
+error: literal out of range for `i32`
+   --> bindings.rs:227
+    |
+227 | pub const MV_E_LIQUIDLENS_UNDEFINED_ERROR: i32 = 2147485439;
+    |                                                     ^^^^^^^^^^
+    = note: the literal `2147485439` does not fit into the type `i32` whose
+            range is `-2147483648..=2147483647`
+```
+
+Rust 不像 C，不会对整数字面量做 silent wrap。`bindgen` 里**所有**能产生 `i32`
+常量的选项都会撞上这个错误：
+
+<Steps>
+
+1. **`MacroTypeVariation::Signed`（全局）** —— 强制*所有*宏常量为 `i32`，但
+   `bindgen` 也会把 `MV_ACCESS_Exclusive` 这类值塞进 `i32`，SDK 一演化就超
+   `i32::MAX`。更本质的问题：即便值能装下，`bindgen` 对 `0x80000000`-style
+   状态码仍然报 `literal out of range`。
+2. **`ParseCallbacks::int_macro`（按宏覆盖）** —— 让你只对状态码返回
+   `IntKind::I32`，理论上完美，**但 `bindgen` 输出它们时仍然撞同样的
+   `literal out of range`**。回调只决定 `bindgen` *试图*用什么类型，并不会
+   放宽范围检查。
+3. **`IntKind::Custom`** —— 同样的问题。`bindgen` 不会重新编码字面量，只是
+   给同一个超范围值换个类型名。
+
+</Steps>
+
+根本原因是 `bindgen` 把整数字面量当作**数学值**，而不是**位模式**。没有任何
+`bindgen` 选项能说"把 `0x80000000` 当作 `i32` 表示为 `-2147483648` 的位模式"。
+这件事只能我们自己重新编码。
+
+<Aside type="note" title="为什么不直接写负数字面量？">
+你可以手写 `pub const MV_E_HANDLE: i32 = -2147483648;`，这能用。但海康 SDK 的
+所有文档、错误码表、技术文章用的都是 `0x80000000` 这种 hex 形式。丢掉它会让
+调试变得困难。`_u32 as i32` 这种重新编码**既保留了 hex 形式**，**又**生成了
+合法的 `i32` 常量。
+</Aside>
+
+## build.rs 实际是怎么解决的
+
+```mermaid
+flowchart LR
+    subgraph SDK["SDK 头文件（只读）"]
+        MvErr["MvErrorDefine.h<br/>MvISPErrorDefine.h<br/>（状态码）"]
+        Other["MvCameraControl.h<br/>CameraParams.h<br/>PixelType.h<br/>（函数、结构体、<br/>枚举值参数）"]
+    end
+
+    subgraph BR["build.rs"]
+        Regex["generate_status_codes()<br/>正则解析 #define 行，<br/>输出 0x80000000_u32 as i32"]
+        BG["bindgen::Builder<br/>.blocklist_file(MvErrorDefine.h)<br/>.blocklist_file(MvISPErrorDefine.h)"]
+    end
+
+    subgraph OUT["OUT_DIR（src/lib.rs 通过 include! 消费）"]
+        SC["status_codes.rs<br/>（MV_OK、MV_E_*、MV_ALG_*<br/>作为 i32）"]
+        B["bindings.rs<br/>（函数、结构体、<br/>MV_ACCESS_* 作为 u32）"]
+    end
+
+    subgraph REV["target/generated/<br/>（稳定路径的审查副本）"]
+        SC2["status_codes.rs"]
+        B2["bindings.rs"]
+    end
+
+    MvErr --> Regex --> SC
+    MvErr -.-"blocklisted"-.-> BG
+    Other --> BG --> B
+
+    SC --> SC2
+    B --> B2
+```
+
+构建脚本运行两个互相独立的生成器：
+
+1. **`generate_status_codes()`** —— 用 20 行正则扫一遍 `MvErrorDefine.h` +
+   `MvISPErrorDefine.h`，对每个 `#define` 输出一行
+   `pub const NAME: i32 = 0x80000000_u32 as i32;`。`_u32 as i32` 就是 C 语言
+   implicit `int` wrap 的 Rust 显式版本。
+2. **`bindgen::Builder`** 加上 `.blocklist_file(r".*MvErrorDefine\.h")` 和
+   `MvISPErrorDefine.h` 的同样配置。`bindgen` 甚至**不会解析**这两个头，所以
+   不会重复输出这些常量。
+
+两份输出都写到 `OUT_DIR/`（被 `src/lib.rs` 的 `include!()` 消费）**以及**
+`target/generated/`（稳定路径的审查副本，方便 SDK 升级时 diff）。
+
+## 这个设计保持的不变量
+
+<Card icon="seti:lock" title="类型对称">
+每个 SDK 函数返回 `c_int`（`i32`）。每个状态码常量是 `i32`。所以 wrapper 里
+所有状态码比较都无需 cast：`if status == sys::MV_E_HANDLE` 直接类型检查通过。
+枚举值参数保持 `u32`，对应 SDK 的 `unsigned int` 参数。整个 wrapper 的 FFI 边界
+上有 0 处 cast。
+</Card>
+
+<Card icon="seti:gear" title="单一真理之源">
+状态码列表直接从 `MvErrorDefine.h` + `MvISPErrorDefine.h` 读取。没有需要手工
+同步的表格，不会漂移。升级 vendored SDK 后跑一次 `cargo build`，`status_codes.rs`
+自动重新生成。
+</Card>
+
+<Card icon="seti:warning" title="SDK 变化时显式失败">
+如果未来的 HikCamera SDK 加了一个**新的**状态码头，超出了当前的 blocklist，
+`bindgen` 会把那些常量输出为 `u32`，wrapper 在把它们和 `i32` 返回值比较的
+地方编译失败。**这是预期行为**——悄悄的类型兜底会掩盖这种缺口。
+</Card>
+
+<Card icon="seti:eye" title="可观测的输出">
+`target/generated/{bindings,status_codes}.rs` 是稳定路径副本，内容**完全等于**
+`src/lib.rs` `include!()` 进来的东西。SDK 升级后，对比上一次构建的审查副本，
+一眼就能看到所有 binding 变化。
+</Card>
+
+## 不要做什么
+
+<Aside type="danger" title="不要加 `int_macro` 回调当'安全网'">
+早期版本的 build script 注册过一个 `ParseCallbacks` impl，对状态码前缀返回
+`IntKind::I32`，"以防"有状态码漏过 blocklist。**这是有害的。** 如果 `bindgen`
+真的把某个状态码输出成 `i32`，而 `generate_status_codes()` 也输出了它，构建会
+以 `E0428: name defined multiple times` 失败——这正是我们想要的显式失败。一个
+悄悄挑 `i32` 类型的回调会掩盖配置漂移。
+</Aside>
+
+<Aside type="danger" title="不要试图在 wrapper.h 里标类型">
+诱惑很大：往 `wrapper.h` 里加一段 `typedef enum { ... } HikStatusCode;`，把每个
+状态码列出来，期望 `bindgen` 把它们按枚举的底层整数类型输出。这种做法
+（a）把状态码列表复制成一份手工维护的 C 源、（b）依赖 `bindgen` 对枚举常量的
+不稳定处理、（c）仍然撞同样的 `literal out of range`，因为枚举 initializer
+`MV_E_HANDLE` 还是裸的 `0x80000000` 字面量。build script 里的生成器同时避免了
+这三个问题。
+</Aside>
+
+## 源码导览
+
+| 文件 | 作用 |
+| --- | --- |
+| `crates/hikcamera-sys/build.rs` | 驱动两个生成器，把输出写到 `OUT_DIR` 和 `target/generated/`。 |
+| `crates/hikcamera-sys/src/lib.rs` | 两个 `include!()`（先 status codes，再 bindgen 输出）。crate 级 doc 给 IDE hover 用，简述了这个拆分。 |
+| `target/generated/status_codes.rs` | 生成的状态码常量的审查副本。 |
+| `target/generated/bindings.rs` | bindgen 输出的审查副本。 |
+| `crates/hikcamera-sys/include/MvErrorDefine.h` | 状态码的上游真理之源。不要编辑。 |
+| `crates/hikcamera/src/error.rs` | `Status(pub i32)` newtype、`check()` 入口、`SDK_ERRORS` 查找表——全部 `i32` 类型，匹配生成的常量。 |
+
+## 下一步
+
+- `Status` 如何变成 `HikCameraError` → [错误模型](/zh/developer/error-model/)。
+- wrapper 里 `unsafe` 允许出现在哪里 → [架构](/zh/developer/architecture/)。

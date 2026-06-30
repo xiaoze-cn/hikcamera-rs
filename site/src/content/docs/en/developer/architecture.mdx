@@ -110,8 +110,10 @@ impossible to represent:
 | `device.rs` | `Device` / `Devices` / `DeviceInfo` / `Transport` |
 | `camera.rs` | `Camera`, `Stream`, `Frame`, all node map accessors, image/video writers |
 
-`hikcamera-sys/src/lib.rs` is a one-liner that `include!`s the bindgen output
-— it has no logic of its own.
+`hikcamera-sys/src/lib.rs` is a thin module that `include!()`s two generated
+files from `OUT_DIR` (`status_codes.rs` first, then `bindings.rs`). It has
+no logic of its own — see [Bindings generation](/developer/bindings-generation/)
+for why the outputs are split.
 
 ## Why the split?
 
@@ -126,5 +128,7 @@ impossible to represent:
 
 ## Next steps
 
+- How the bindings are generated (status codes vs `bindgen` output) →
+  [Bindings generation](/developer/bindings-generation/).
 - How errors are typed → [Error model](/developer/error-model/).
 - How to contribute → [Contributing](/developer/contributing/).
