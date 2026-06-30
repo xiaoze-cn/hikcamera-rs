@@ -1,6 +1,13 @@
 target/
 .pixi/
+__pycache__/
+*.py[cod]
+Cargo.lock
+pixi.lock
 crates/hikcamera/examples/datas/
 site/.astro/
 site/dist/
 site/node_modules/
+site/pnpm-lock.yaml
+site/test-results/
+site/playwright-report/

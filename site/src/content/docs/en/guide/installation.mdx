@@ -4,7 +4,6 @@ description: Set up the build environment, fetch vendor DLLs, and verify a works
 ---
 
 import { Aside, Steps, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
-import RecipeTable from '@components/RecipeTable.jsx';
 
 `hikcamera-rs` is Windows-only. The build needs `libclang` (for `bindgen`) and
 the MSVC toolchain (for linking the vendor import library). Both are wired up
@@ -55,18 +54,15 @@ environment is not configured.
 
 <Tabs>
   <TabItem label="Common recipes">
-    <RecipeTable
-      locale="en"
-      rows={[
-        ["check", "`cargo check --workspace`"],
-        ["build", "`cargo build --workspace`"],
-        ["build-examples", "`cargo build --workspace --examples`"],
-        ["test", "`cargo test --workspace`"],
-        ["fmt-check", "`rustfmt` check (run before committing)"],
-        ["pre-commit", "`fmt-check` + `check` (what lefthook runs)"],
-        ["clean", "`cargo clean`"],
-      ]}
-    />
+    | Recipe | What it does |
+    | --- | --- |
+    | `check` | `cargo check --workspace` |
+    | `build` | `cargo build --workspace` |
+    | `build-examples` | `cargo build --workspace --examples` |
+    | `test` | `cargo test --workspace` |
+    | `fmt-check` | `rustfmt` check (run before committing) |
+    | `pre-commit` | `fmt-check` + `check` (what lefthook runs) |
+    | `clean` | `cargo clean` |
   </TabItem>
   <TabItem label="Ad-hoc cargo args">
     Extra arguments after a recipe are forwarded to cargo:

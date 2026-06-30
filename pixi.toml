@@ -1,10 +1,12 @@
 [workspace]
 name = "hikcamera-rs"
 channels = ["conda-forge"]
-platforms = ["win-64"]
+platforms = ["win-64", "linux-64"]
 
 [dependencies]
 clangdev = "18.*"
 lefthook = "*"
+llvm-tools = "18.*"
 nodejs = "*"
 pnpm = "*"
+python = "*"

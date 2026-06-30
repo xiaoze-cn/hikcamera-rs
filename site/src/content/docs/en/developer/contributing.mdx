@@ -4,7 +4,6 @@ description: Day-to-day just commands, formatting rules, language policy, and wh
 ---
 
 import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-import RecipeTable from '@components/RecipeTable.jsx';
 
 Thanks for wanting to contribute. This page covers what you actually need to
 land a pull request — `just` recipes, formatting, language rules, and what
@@ -22,19 +21,16 @@ shorter version; `AGENTS.md` is the source of truth.
 Everything goes through `just` — bare `cargo` will fail because the build
 needs `LIBCLANG_PATH` set (see [Installation](/guide/installation/)).
 
-<RecipeTable
-  locale="en"
-  rows={[
-    ["setup", "Install pixi env, copy `libclang.dll`, install lefthook hooks"],
-    ["check", "`cargo check --workspace`"],
-    ["build", "`cargo build --workspace`"],
-    ["build-examples", "`cargo build --workspace --examples`"],
-    ["test", "`cargo test --workspace`"],
-    ["fmt-check", "`rustfmt` check"],
-    ["pre-commit", "`fmt-check` + `check` (what lefthook runs on commit)"],
-    ["clean", "`cargo clean`"],
-  ]}
-/>
+| Recipe | What it does |
+| --- | --- |
+| `setup` | Install pixi env, copy `libclang.dll`, install lefthook hooks |
+| `check` | `cargo check --workspace` |
+| `build` | `cargo build --workspace` |
+| `build-examples` | `cargo build --workspace --examples` |
+| `test` | `cargo test --workspace` |
+| `fmt-check` | `rustfmt` check |
+| `pre-commit` | `fmt-check` + `check` (what lefthook runs on commit) |
+| `clean` | `cargo clean` |
 
 Forward ad-hoc args to cargo:
 

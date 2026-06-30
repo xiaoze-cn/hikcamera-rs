@@ -4,7 +4,6 @@ description: 日常 just 命令、格式化规则、语言策略和 lefthook 在
 ---
 
 import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-import RecipeTable from '@components/RecipeTable.jsx';
 
 感谢你想贡献。这一页覆盖提交 PR 真正需要的东西——`just` recipe、格式化、语言
 规则，以及 `lefthook` 在 commit 时会检查什么。
@@ -21,19 +20,16 @@ import RecipeTable from '@components/RecipeTable.jsx';
 一切通过 `just`——裸 `cargo` 会失败，因为构建需要 `LIBCLANG_PATH`（见
 [安装](/zh/guide/installation/)）。
 
-<RecipeTable
-  locale="zh"
-  rows={[
-    ["setup", "安装 pixi 环境、复制 `libclang.dll`、装 lefthook 钩子"],
-    ["check", "`cargo check --workspace`"],
-    ["build", "`cargo build --workspace`"],
-    ["build-examples", "`cargo build --workspace --examples`"],
-    ["test", "`cargo test --workspace`"],
-    ["fmt-check", "`rustfmt` 检查"],
-    ["pre-commit", "`fmt-check` + `check`（lefthook 在 commit 时跑的）"],
-    ["clean", "`cargo clean`"],
-  ]}
-/>
+| Recipe | 作用 |
+| --- | --- |
+| `setup` | 安装 pixi 环境、复制 `libclang.dll`、装 lefthook 钩子 |
+| `check` | `cargo check --workspace` |
+| `build` | `cargo build --workspace` |
+| `build-examples` | `cargo build --workspace --examples` |
+| `test` | `cargo test --workspace` |
+| `fmt-check` | `rustfmt` 检查 |
+| `pre-commit` | `fmt-check` + `check`（lefthook 在 commit 时跑的） |
+| `clean` | `cargo clean` |
 
 把额外参数转发给 cargo：
 
