@@ -13,6 +13,11 @@ it. Read them in order before opening a non-trivial pull request.
     Why the workspace splits into `hikcamera-sys` and `hikcamera`, where
     `unsafe` is allowed, and how the layered types own the C SDK lifecycle.
   </LinkCard>
+  <LinkCard title="Bindings generation" href="/developer/bindings-generation/" icon="seti:c">
+    How `build.rs` splits the SDK header into `bindgen` output and a
+    hand-rolled status-code module, why the split exists, and the traps it
+    avoids. Read before editing `build.rs`.
+  </LinkCard>
   <LinkCard title="Error model" href="/developer/error-model/" icon="seti:warning">
     How raw SDK status codes become a typed `HikCameraError`, the `Status`
     newtype, and the constant lookup table.

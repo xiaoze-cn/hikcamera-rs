@@ -6,23 +6,28 @@ pub type Result<T> = std::result::Result<T, HikCameraError>;
 
 /// Raw status code returned by the HikCamera MV SDK.
 ///
-/// The C API returns `int`. `MV_OK` (0) means success; failures are
-/// `0x80000000`-style literals that read as negative values when stored in
-/// a signed `i32`. This newtype keeps raw SDK status codes visually and
-/// type-distinct from arbitrary `i32` values flowing through the wrapper.
+/// The C API returns `int`, and `hikcamera-sys` emits the status-code
+/// constants (`MV_OK`, `MV_E_*`, `MV_ALG_*`) as `i32` to match — see the
+/// crate-level docs of `hikcamera-sys` for how those constants are generated.
+/// This newtype keeps raw SDK status codes visually and type-distinct from
+/// arbitrary `i32` values flowing through the wrapper, and is directly
+/// comparable to `sys::MV_*` constants with no casts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, From)]
 pub struct Status(pub i32);
 
 impl Status {
     /// SDK success status (`MV_OK`).
-    pub const OK: Self = Self(sys::MV_OK as i32);
+    pub const OK: Self = Self(sys::MV_OK);
 
+    /// Raw SDK status code as the `i32` returned by the C API.
     #[inline]
     pub const fn raw(self) -> i32 {
         self.0
     }
 
-    /// Reinterpret as `u32` (useful for `0x80000000`-style hex formatting).
+    /// Reinterpret as `u32`. Bit-equal to `self.raw()`; useful for
+    /// `0x80000000`-style hex formatting where the unsigned form is more
+    /// readable than the signed `-2147483648`.
     #[inline]
     pub const fn as_u32(self) -> u32 {
         self.0 as u32
@@ -36,7 +41,7 @@ impl Status {
     pub fn info(self) -> StatusInfo {
         SDK_ERRORS
             .iter()
-            .find(|(code, _)| *code == self.as_u32())
+            .find(|(code, _)| *code == self.0)
             .map(|(_, info)| *info)
             .unwrap_or(UNKNOWN_STATUS_INFO)
     }
@@ -112,8 +117,14 @@ pub struct StatusInfo {
     pub message: &'static str,
 }
 
+/// Convert an SDK return value into a `Result`.
+///
+/// The SDK functions return `c_int` (`i32`); `hikcamera-sys` emits its
+/// status-code constants as `i32` to match (see its build.rs / lib.rs docs
+/// for how those constants are generated). `check` therefore takes an `i32`
+/// directly — no casts at call sites, no casts inside.
 pub(crate) fn check(code: i32) -> Result<()> {
-    Status::from(code).into_result()
+    Status(code).into_result()
 }
 
 impl HikCameraError {
@@ -141,7 +152,7 @@ macro_rules! status_info {
 
 /// Lookup table mapping SDK status codes to `StatusInfo` (linear scan;
 /// error paths are not hot, so no hashing required).
-const SDK_ERRORS: &[(u32, StatusInfo)] = &[
+const SDK_ERRORS: &[(i32, StatusInfo)] = &[
     status_info!(MV_OK, "Success"),
     status_info!(MV_E_HANDLE, "Invalid handle"),
     status_info!(MV_E_SUPPORT, "Unsupported function"),
