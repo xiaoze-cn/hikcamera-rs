@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 Cargo.lock
 pixi.lock
+crates/hikcamera-sys/src/bindings.rs
 crates/hikcamera/examples/datas/
 site/.astro/
 site/dist/
