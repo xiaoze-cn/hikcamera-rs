@@ -17,8 +17,8 @@ from collections import defaultdict, deque
 from pathlib import Path
 
 DEFAULT_ARCH_DIRS = (
-    Path("crates/hikcamera-sys/lib/win32"),
-    Path("crates/hikcamera-sys/lib/win64"),
+    Path("conda-packages/hikcamera-mvs-runtime/files/win32"),
+    Path("conda-packages/hikcamera-mvs-runtime/files/win64"),
 )
 DEFAULT_ENTRIES = ("MvCameraControl.dll", "MvISPControl.dll")
 DLL_RE = re.compile(r"DLL Name: (.+)")
@@ -113,6 +113,10 @@ class ArchResult:
 
 def check_arch(arch_dir: Path, entries: list[str], objdump: str) -> ArchResult:
     result = ArchResult(arch_dir)
+    if not arch_dir.is_dir():
+        result.missing.append((str(arch_dir), "<arch-dir>"))
+        return result
+
     local_files = {
         path.name.lower(): path.name for path in arch_dir.iterdir() if path.is_file()
     }
