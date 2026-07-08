@@ -1,59 +1,73 @@
 set shell := ["sh", "-cu"]
 
 root := justfile_directory()
+
 host_os := os()
 host_family := os_family()
-windows_host := if host_family == "windows" { "true" } else { "false" }
-path_sep := if windows_host == "true" { ";" } else { ":" }
-pixi_bin := if windows_host == "true" { root + "\\.pixi\\envs\\default\\Library\\bin" } else { root + "/.pixi/envs/default/bin" }
-libclang_dir := if windows_host == "true" { pixi_bin } else { root + "/.pixi/envs/default/lib" }
-libclang_path := if windows_host == "true" { libclang_dir + "\\libclang.dll" } else if host_os == "macos" { libclang_dir + "/libclang.dylib" } else { libclang_dir + "/libclang.so" }
-libclang_versioned_path := if windows_host == "true" { libclang_dir + "\\libclang-13.dll" } else { libclang_path }
+system := host_os
+
+separator := if system == "windows" { ";" } else { ":" }
+joiner := if system == "windows" { "\\" } else { "/" }
+
+pixi_env := root + "/.pixi/envs/default"
+pixi_bin := if system == "windows" { root + "\\.pixi\\envs\\default\\Library\\bin" } else { pixi_env + "/bin" }
+
+libclang_dir := if system == "windows" { pixi_bin } else { pixi_env + "/lib" }
+libclang_file := if system == "windows" { "libclang.dll" } else if system == "macos" { "libclang.dylib" } else { "libclang.so" }
+libclang_path := libclang_dir + joiner + libclang_file
 
 export LIBCLANG_PATH := libclang_path
-export PATH := pixi_bin + path_sep + libclang_dir + path_sep + env("PATH")
+export PATH := pixi_bin + separator + libclang_dir + separator + env("PATH")
 export LD_LIBRARY_PATH := libclang_dir + ":" + env("LD_LIBRARY_PATH", "")
 export DYLD_LIBRARY_PATH := libclang_dir + ":" + env("DYLD_LIBRARY_PATH", "")
 
 _default:
-    just --list
+    @just --unsorted --list
 
-check: setup
+[group('Setup')]
+setup:
+    pixi install
+    just _libclang
+    lefthook install
+
+[group('Rust')]
+check: _libclang
     cargo check --workspace
 
-ra-check: ensure-libclang
-    @cargo check --workspace --message-format=json --all-targets --keep-going --target-dir target/rust-analyzer
-
-build: setup
+[group('Rust')]
+build: _libclang
     cargo build --workspace
 
-build-examples: setup
-    cargo build --workspace --examples
-
-dll-deps: setup
-    python scripts/check_dll_deps.py
-
-dll-deps-md: setup
-    python scripts/check_dll_deps.py --format markdown
-
-test: setup
+[group('Rust')]
+test: _libclang
     cargo test --workspace
 
-fmt-check:
-    cargo fmt --all -- --check
-
-pre-commit: fmt-check check
-
-mod site
-
+[group('Rust')]
 clean:
     cargo clean
 
-setup:
-    pixi install
-    just ensure-libclang
-    lefthook install
+[group('Examples')]
+build-examples: _libclang
+    cargo build --workspace --examples
 
-ensure-libclang:
-    @if [ "{{ windows_host }}" = "true" ] && [ ! -f "{{ libclang_path }}" ] && [ -f "{{ libclang_versioned_path }}" ]; then cp "{{ libclang_versioned_path }}" "{{ libclang_path }}"; fi
+[group('Environment')]
+env-check: _libclang
+    python scripts/check_env.py runtime
+
+[group('Verify')]
+fmt-check:
+    cargo fmt --all -- --check
+
+[group('Verify')]
+pre-commit: fmt-check check
+
+[group('Verify')]
+ra-check: _libclang
+    @cargo check --workspace --message-format=json --all-targets --keep-going --target-dir target/rust-analyzer
+
+[group: 'Site']
+mod site
+
+_libclang:
+    @if [ "{{ system }}" = "windows" ] && [ ! -f "{{ libclang_path }}" ] && [ -f "{{ libclang_dir }}{{ joiner }}libclang-13.dll" ]; then cp "{{ libclang_dir }}{{ joiner }}libclang-13.dll" "{{ libclang_path }}"; fi
     @test -f "{{ libclang_path }}" || { echo "error: libclang not found at {{ libclang_path }}; run 'pixi install' first" >&2; exit 1; }

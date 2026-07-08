@@ -1,0 +1,22 @@
+---
+import DocRenderer from '../components/DocRenderer.astro'
+import DocsLayout from '../layouts/DocsLayout.astro'
+import { pages } from '../data/pages.js'
+
+export function getStaticPaths() {
+  return pages.map(page => ({
+    params: {
+      slug: page.slug || undefined
+    },
+    props: {
+      page
+    }
+  }))
+}
+
+const { page } = Astro.props
+---
+
+<DocsLayout title={page.title} toc={page.toc} currentSlug={page.slug}>
+  <DocRenderer page={page} />
+</DocsLayout>

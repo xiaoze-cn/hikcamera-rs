@@ -2,40 +2,54 @@ set shell := ["sh", "-cu"]
 set working-directory := "."
 
 root := ".."
-host_family := os_family()
-path_sep := if host_family == "windows" { ";" } else { ":" }
-pixi_bin := if host_family == "windows" { root + "/.pixi/envs/default/Library/bin" } else { root + "/.pixi/envs/default/bin" }
-export PATH := pixi_bin + path_sep + env("PATH")
 
-# Zed's integrated terminal (and MSYS/Git Bash environments) can leak a
-# Unix-style TEMP/TMP on Windows (e.g. `/tmp/zed-agent-terminal-XXXX`). Node's
-# `os.tmpdir()` then resolves to a bare drive letter (e.g. `D:`) and pnpm
-# crashes inside `realpathSync`. Force a Windows-style temp dir before any
-# pnpm/node invocation on Windows hosts.
-export TEMP := if host_family == "windows" { "D:/tmp/hikcamera-site" } else { env("TEMP", "/tmp") }
-export TMP := if host_family == "windows" { "D:/tmp/hikcamera-site" } else { env("TMP", "/tmp") }
-# pnpm otherwise prompts interactively when node_modules is stale.
+host_os := os()
+host_family := os_family()
+system := host_os
+
+separator := if system == "windows" { ";" } else { ":" }
+
+pixi_env := root + "/.pixi/envs/default"
+pixi_bin := if system == "windows" { pixi_env + "/Library/bin" } else { pixi_env + "/bin" }
+pnpm_bin := if system == "windows" { pixi_env + "/Library/share/pnpm/node_modules/.bin" } else { pixi_bin }
+
+export PATH := if system == "windows" { pnpm_bin + separator + pixi_bin + separator + env("PATH") } else { pixi_bin + separator + env("PATH") }
+
+local_temp := env("LOCALAPPDATA", root + "/.tmp") + "/Temp/hikcamera-site"
+export TEMP := if system == "windows" { local_temp } else { env("TEMP", "/tmp") }
+export TMP := if system == "windows" { local_temp } else { env("TMP", "/tmp") }
+
 export CI := "true"
 
-install:
-    pnpm install
+_default:
+    @just --unsorted --list
 
-dev:
+[group('Setup')]
+install: _temp
+    pnpm install --no-frozen-lockfile
+
+[group('Site')]
+dev: _temp
     pnpm run dev
 
-build:
+[group('Site')]
+build: _temp
     pnpm run build
 
+[group('Site')]
+start: _temp
+    pnpm run start
+
+[group('Verify')]
 check: build
 
-test-e2e:
-    pnpm run test:e2e
-
+[group('Tools')]
 playwright-install:
     pnpm exec playwright install chromium
 
-start:
-    pnpm run start
-
+[group('Clean')]
 clean:
     rm -rf .astro dist node_modules
+
+_temp:
+    @mkdir -p "$TEMP"

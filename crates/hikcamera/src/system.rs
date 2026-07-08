@@ -1,7 +1,6 @@
-use std::ptr::{self, NonNull};
 use std::sync::Mutex;
 
-use crate::{Camera, Device, Devices, HikCameraError, Result, error::check, sys};
+use crate::{Devices, HikCameraError, Result, error::check, sys};
 
 static SDK_REF_COUNT: Mutex<usize> = Mutex::new(0);
 
@@ -39,26 +38,6 @@ impl HikCamera {
 
     pub fn devices(&self) -> Result<Devices<'_>> {
         Devices::list(self)
-    }
-
-    pub(crate) fn open_device<'hik>(&'hik self, device: &Device<'hik>) -> Result<Camera<'hik>> {
-        let mut handle = ptr::null_mut();
-        check(unsafe { sys::MV_CC_CreateHandle(&mut handle, device.raw()) })?;
-
-        let Some(handle) = NonNull::new(handle.cast()) else {
-            return Err(HikCameraError::NullHandle);
-        };
-
-        if let Err(error) =
-            check(unsafe { sys::MV_CC_OpenDevice(handle.as_ptr(), sys::MV_ACCESS_Exclusive, 0) })
-        {
-            unsafe {
-                sys::MV_CC_DestroyHandle(handle.as_ptr());
-            }
-            return Err(error);
-        }
-
-        Ok(Camera::from_handle(handle))
     }
 }
 

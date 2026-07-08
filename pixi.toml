@@ -1,6 +1,6 @@
 [workspace]
 name = "hikcamera-rs"
-channels = ["https://vidlg.github.io/conda-channel", "conda-forge"]
+channels = ["https://xiaoze-cn.github.io/conda-channel", "conda-forge"]
 platforms = ["win-64", "linux-64"]
 
 [dependencies]
@@ -12,4 +12,4 @@ pnpm = "*"
 python = "*"
 
 [target.win-64.dependencies]
-hikcamera-mvs-runtime = "0.1.*"
+hikcamera-mvs = "==5.0.1"

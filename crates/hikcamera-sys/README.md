@@ -1,31 +1,23 @@
 # hikcamera-sys
 
-Low-level, `bindgen`-generated FFI bindings for the
-[HikCamera MVS](https://www.hikrobotics.com/) industrial camera C SDK.
+Low-level, `bindgen`-generated FFI bindings for the [HikCamera MVS](https://www.hikrobotics.com/) industrial camera C SDK.
 
-This crate is intended as an implementation detail of the
-[`hikcamera`](https://docs.rs/hikcamera) safe wrapper and is Windows-only.
-End users should prefer `hikcamera` over using these raw bindings directly.
+This crate is an implementation detail of the [`hikcamera`](https://docs.rs/hikcamera) safe wrapper. End users should prefer `hikcamera` over these raw bindings.
 
 ## Platform support
 
 | OS | Arch | Status |
 |---|---|---|
-| Windows | x86_64 | ✅ Supported (vendored import lib + conda runtime DLL) |
-| Windows | x86 | ⚠️ Bindings compile; runtime DLL not packaged |
-| Linux / macOS | any | ❌ Unsupported by upstream SDK |
+| Windows | x86_64 | ✅ Supported with SDK files from the `hikcamera-mvs` conda package |
+| Windows | x86 | ⚠️ SDK files are staged, but the workspace currently targets x86_64 |
+| Linux | x86_64 | 🚧 Future target, not packaged by this crate yet |
+| macOS | any | ❌ Unsupported by the HikCamera MVS SDK |
 
-## What's vendored
+## SDK files
 
-- `include/` — original HikCamera MVS C headers (`MvCameraControl.h` and friends).
-- `lib/win{32,64}/MvCameraControl.lib` — MSVC import libraries.
-
-The matching runtime DLLs (`MvCameraControl.dll` and its dependencies) are
-distributed via the `hikcamera-mvs-runtime` conda package; see
-[`conda-packages/`](../conda-packages) in the workspace root.
+The HikCamera MVS headers, import libraries, and runtime DLLs are provided by the `hikcamera-mvs` conda package.
+pixi installs that package into `.pixi/envs/default`, and `build.rs` reads headers and import libraries from the active pixi environment.
 
 ## License
 
-The Rust bindings in this crate are MIT-licensed. The vendored HikCamera MVS
-headers and import library remain under the HikCamera MVS SDK license — see
-`LicenseRef-HikCamera-MVS`.
+The Rust bindings in this crate are MIT-licensed. The HikCamera MVS SDK files remain under the HikCamera MVS SDK license, `LicenseRef-HikCamera-MVS`.

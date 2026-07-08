@@ -56,17 +56,32 @@ fn main() -> hikcamera::Result<()> {
 ## 项目结构
 
 ```text
-HikCamera/
+hikcamera-rs/
 ├── Cargo.toml
 ├── Cargo.lock
 ├── README.md
-├── AGENTS.md
 ├── justfile
 ├── pixi.toml
-├── site/                # Starlight 文档站点
+├── scripts/
+│   ├── check_env.py
+│   └── env/
+│       └── win_dll.toml
+├── conda-packages/
+│   └── hikcamera-mvs/
+│       ├── recipe.yaml
+│       └── sources/
+├── docs/
+├── site/
+│   ├── src/
+│   ├── public/
+│   └── justfile
 └── crates/
     ├── hikcamera/
     │   ├── Cargo.toml
+    │   ├── examples/
+    │   │   ├── camera.rs
+    │   │   ├── device.rs
+    │   │   └── system.rs
     │   └── src/
     │       ├── lib.rs
     │       ├── camera.rs
@@ -76,28 +91,10 @@ HikCamera/
     └── hikcamera-sys/
         ├── Cargo.toml
         ├── build.rs
-        ├── wrapper.h
-        ├── include/       # 厂商 C 头文件
-        └── lib/
-            ├── win32/
-            └── win64/
+        ├── tests/
+        │   └── bindings.rs
+        └── wrapper.h
 ```
-
-## 文档
-
-在线站点（双语）由 `site/` 下的 Starlight 生成，本地预览：
-
-```sh
-just site install     # 首次
-just site dev         # 本地开发
-just site build       # 生成静态文件
-```
-
-主要分区：
-
-- **使用指南**：安装、快速开始、SDK 生命周期、设备选择、相机配置、采集、图像与视频写入
-- **开发者文档**：架构、错误模型、贡献
-- **参考**：运行时依赖、设备信息字段、C SDK 函数 / 结构体 / 像素格式 / 错误码
 
 ## 协议
 

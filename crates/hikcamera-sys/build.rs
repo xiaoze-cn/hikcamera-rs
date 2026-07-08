@@ -8,44 +8,41 @@ const HIK_CAMERA_LIB: &str = "MvCameraControl";
 
 fn main() {
     println!("cargo:rerun-if-env-changed=LIBCLANG_PATH");
+    println!("cargo:rerun-if-env-changed=CONDA_PREFIX");
+    println!("cargo:rerun-if-env-changed=PIXI_PROJECT_ROOT");
+    println!("cargo:rerun-if-env-changed=PIXI_ENVIRONMENT_NAME");
 
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let include_dir = manifest_dir.join("include");
+    let sdk_dir = sdk_library_dir(&manifest_dir);
+    let include_dir = sdk_dir.join("include").join("hikcamera-mvs");
     let header = manifest_dir.join("wrapper.h");
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     println!("cargo:rerun-if-changed={}", header.display());
-    println!("cargo:rerun-if-changed={}", include_dir.display());
+    println!("cargo:rerun-if-changed={}", sdk_dir.display());
 
-    // Cargo sets CARGO_CFG_TARGET_OS / CARGO_CFG_TARGET_ARCH for build scripts
-    // automatically; no need to pull in `target-lexicon` just to parse the
-    // triple.
     let target_os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS unset");
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").expect("CARGO_CFG_TARGET_ARCH unset");
-
-    let lib_subdir = match (target_os.as_str(), target_arch.as_str()) {
-        ("windows", "x86_64") => "win64",
-        ("windows", "x86") => "win32",
+    match (target_os.as_str(), target_arch.as_str()) {
+        ("windows", "x86_64") => {}
         _ => panic!("unsupported target for hikcamera-sys: {target_os}-{target_arch}"),
-    };
-    let lib_dir = manifest_dir.join("lib").join(lib_subdir);
+    }
+    let lib_dir = sdk_dir.join("lib");
+    require_dir("HikCamera MVS headers", &include_dir);
+    require_dir("HikCamera MVS import libraries", &lib_dir);
+    require_file(
+        "HikCamera MVS import library",
+        &lib_dir.join(format!("{HIK_CAMERA_LIB}.lib")),
+    );
 
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
     println!("cargo:rustc-link-lib=dylib={HIK_CAMERA_LIB}");
 
-    // 1. Generate status-code constants ourselves. The SDK declares them as
-    //    unsigned `0x80000000`-style literals, which bindgen cannot emit as
-    //    `i32` (literal out of range). We re-encode each value as
-    //    `0x80000000_u32 as i32` so the generated constant keeps its original
-    //    hex form while having the same bit pattern as the SDK's `int` return.
-    //    See `src/lib.rs` for the design rationale.
+    // Bindgen cannot emit the SDK's unsigned hex error literals as `i32`
     let status_codes_out = out_dir.join("status_codes.rs");
     let status_codes_src = generate_status_codes(&include_dir);
 
-    // 2. Blocklist the two status-code headers so bindgen doesn't double-
-    //    emit their `#define`s. The path is regex-matched against what clang
-    //    reports (which includes the `-I` prefix); `.*<filename>` is the most
-    //    stable form across build environments.
+    // Blocklist status-code headers because `status_codes.rs` owns them
     let bindings = bindgen::Builder::default()
         .header(header.to_string_lossy())
         .clang_arg(format!("-I{}", include_dir.display()))
@@ -59,16 +56,49 @@ fn main() {
         .write_to_file(out_dir.join("bindings.rs"))
         .expect("failed to write HikCamera MVS bindings");
 
-    // 3. Stable-path review copies under `target/generated/` (OUT_DIR has a
-    //    per-build hash suffix; humans need a stable path to diff across SDK
-    //    upgrades).
+    // Keep review copies at stable paths for SDK upgrade diffs
     let generated_dir = target_dir(&manifest_dir).join("generated");
     write_generated(&generated_dir.join("bindings.rs"), bindings.to_string());
     write_generated(&generated_dir.join("status_codes.rs"), status_codes_src);
 }
 
-/// Resolve the workspace `target/` directory. Prefers the `CARGO_TARGET_DIR`
-/// env var; falls back to `<crate>/../../target`.
+fn sdk_library_dir(manifest_dir: &Path) -> PathBuf {
+    if let Some(prefix) = env::var_os("CONDA_PREFIX") {
+        return PathBuf::from(prefix).join("Library");
+    }
+
+    let project_root = env::var_os("PIXI_PROJECT_ROOT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| workspace_root(manifest_dir));
+    let environment_name = env::var_os("PIXI_ENVIRONMENT_NAME").unwrap_or_else(|| "default".into());
+
+    project_root
+        .join(".pixi")
+        .join("envs")
+        .join(environment_name)
+        .join("Library")
+}
+
+fn workspace_root(manifest_dir: &Path) -> PathBuf {
+    manifest_dir
+        .parent()
+        .and_then(|p| p.parent())
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| manifest_dir.to_path_buf())
+}
+
+fn require_dir(label: &str, path: &Path) {
+    assert!(
+        path.is_dir(),
+        "{label} directory not found: {}",
+        path.display()
+    );
+}
+
+fn require_file(label: &str, path: &Path) {
+    assert!(path.is_file(), "{label} not found: {}", path.display());
+}
+
 fn target_dir(manifest_dir: &Path) -> PathBuf {
     if let Some(dir) = env::var_os("CARGO_TARGET_DIR") {
         return PathBuf::from(dir);
@@ -87,23 +117,14 @@ fn write_generated(path: &Path, contents: String) {
     let _ = fs::write(path, contents);
 }
 
-/// Parse `MvErrorDefine.h` + `MvISPErrorDefine.h` and return a Rust source
-/// string that re-declares every status-code macro (`MV_OK`, `MV_E_*`,
-/// `MV_ALG_*`) as an `i32` constant, matching the SDK's `c_int` return type.
-///
-/// Each `0x80000000`-style value is rewritten as `<hex>_u32 as i32` so the
-/// original hex form is preserved in the source while the Rust literal stays
-/// in range. The C compiler does the equivalent implicit truncation when the
-/// SDK compares `int` against these macros.
+/// Generate SDK status-code constants as `i32`, matching C API return values
 fn generate_status_codes(include_dir: &Path) -> String {
     let sources = [
         include_dir.join("MvErrorDefine.h"),
         include_dir.join("MvISPErrorDefine.h"),
     ];
 
-    // Status-code family prefixes (MV_OK, MV_E_*, MV_ALG_*). Other MV_*
-    // macros (MV_ACCESS_*, pixel formats, ...) are enum-parameter values
-    // that bindgen emits as `u32` to match unsigned SDK function parameters.
+    // Other MV_* macros are enum-parameter values and should stay in bindgen
     let define_re = Regex::new(
         r"^\s*#define\s+(MV_OK|MV_E_[A-Z0-9_]+|MV_ALG_[A-Z0-9_]+)\s+(0x[0-9A-Fa-f]+|\d+)",
     )
@@ -122,38 +143,27 @@ fn generate_status_codes(include_dir: &Path) -> String {
         }
     }
 
-    // Dedup: MvErrorDefine.h re-includes MvISPErrorDefine.h. Keep first
-    // occurrence so the MV_ALG_* constants stay grouped with their source.
+    // MvErrorDefine.h re-includes MvISPErrorDefine.h
     let mut seen = std::collections::HashSet::new();
     entries.retain(|(name, _)| seen.insert(name.clone()));
 
-    // Cheap SDK-format drift detector: if the regex stops matching (header
-    // changed style, new prefix family we don't recognise, regex itself
-    // broken), the entry count collapses. Fail loud here so the wrapper
-    // doesn't silently ship with a partial status-code table. The threshold
-    // is intentionally loose — bump it after a real SDK upgrade that grows
-    // the table.
+    // Fail loud if SDK header format changes and the regex stops matching
     const MIN_EXPECTED_STATUS_CODES: usize = 200;
     assert!(
         entries.len() >= MIN_EXPECTED_STATUS_CODES,
-        "found only {} SDK status codes across MvErrorDefine.h + MvISPErrorDefine.h; \
-         expected at least {}. Either the vendored SDK shrank dramatically or \
-         the parsing regex in build.rs no longer matches the header format.",
+        concat!(
+            "SDK status-code parsing found {} entries, expected at least {}. ",
+            "The vendored SDK may have changed, or build.rs no longer matches the header format."
+        ),
         entries.len(),
         MIN_EXPECTED_STATUS_CODES,
     );
 
     let mut out = String::new();
-    out.push_str("// @generated by `build.rs`. Do not edit by hand.\n");
-    out.push_str("//\n");
-    out.push_str("// HikCamera MVS status codes as `i32` constants, matching the\n");
-    out.push_str("// SDK's `c_int` return type. Parsed from:\n");
-    out.push_str("//   - include/MvErrorDefine.h\n");
-    out.push_str("//   - include/MvISPErrorDefine.h\n");
-    out.push_str("//\n");
-    out.push_str("// Each unsigned `0x80000000`-style literal from the C header is\n");
-    out.push_str("// re-encoded as `<hex>_u32 as i32` so the bit pattern matches the\n");
-    out.push_str("// SDK's `int` return value while keeping the hex form readable.\n");
+    out.push_str("// @generated by build.rs. Do not edit by hand.\n");
+    out.push_str("// Source: hikcamera-mvs package headers under the active pixi environment.\n");
+    out.push_str("// Status-code constants use i32 to match the HikCamera C API return type.\n");
+    out.push_str("// Hex error literals use <hex>_u32 as i32 to preserve bit patterns.\n");
     out.push_str("\n");
 
     for (name, value) in &entries {

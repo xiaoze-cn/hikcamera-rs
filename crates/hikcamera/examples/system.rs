@@ -1,15 +1,14 @@
-use hikcamera::{Devices, HikCamera};
+use hikcamera::HikCamera;
 
 fn main() -> hikcamera::Result<()> {
-    let hik = hik_camera()?;
+    let hik = hikcamera()?;
 
     version(&hik);
-    devices(&hik)?;
 
     Ok(())
 }
 
-fn hik_camera() -> hikcamera::Result<HikCamera> {
+fn hikcamera() -> hikcamera::Result<HikCamera> {
     let hik = HikCamera::new()?;
 
     println!("HikCamera::new()");
@@ -27,13 +26,6 @@ fn version(hik: &HikCamera) {
     println!("  patch: {:?}", version.patch);
     println!("  build: {:?}", version.build);
     println!("  raw: {:?}", version.raw);
-}
 
-fn devices(hik: &HikCamera) -> hikcamera::Result<Devices<'_>> {
-    let devices = hik.devices()?;
-
-    println!("HikCamera::devices()");
-    println!("  count: {:?}", devices.len());
-
-    Ok(devices)
+    assert_ne!(version.raw, 0);
 }

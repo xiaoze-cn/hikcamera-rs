@@ -1,0 +1,6 @@
+MVS: 5.0.1 Build 20260512
+Industrial Camera SDK: 4.8.0.3 Build 20260512
+
+Source install:
+  C:\HikRobot\MVS
+  C:\Program Files (x86)\Common Files\MVS\Runtime

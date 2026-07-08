@@ -1,0 +1,12 @@
+---
+const { page } = Astro.props
+import { renderMarkdown } from '../lib/renderMarkdown.js'
+
+const [zhHtml, enHtml] = await Promise.all([
+  renderMarkdown(page.markdown.zh),
+  renderMarkdown(page.markdown.en)
+])
+---
+
+<div class="doc-content lang-zh" set:html={zhHtml}></div>
+<div class="doc-content lang-en" set:html={enHtml}></div>

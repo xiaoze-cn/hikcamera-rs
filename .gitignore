@@ -12,3 +12,6 @@ site/node_modules/
 site/pnpm-lock.yaml
 site/test-results/
 site/playwright-report/
+site/output/
+site/.next/
+site/content/

@@ -1,5 +1,6 @@
 use std::fmt;
 use std::mem::MaybeUninit;
+use std::ptr::{self, NonNull};
 
 use crate::{Camera, HikCamera, HikCameraError, Result, error::check, sys};
 
@@ -10,7 +11,7 @@ pub struct Devices<'hik> {
 
 #[derive(Clone)]
 pub struct Device<'hik> {
-    hik: &'hik HikCamera,
+    _hik: &'hik HikCamera,
     raw: sys::MV_CC_DEVICE_INFO,
     info: DeviceInfo,
 }
@@ -230,7 +231,7 @@ impl<'items, 'hik> IntoIterator for &'items Devices<'hik> {
 impl<'hik> Device<'hik> {
     fn from_raw(hik: &'hik HikCamera, raw: sys::MV_CC_DEVICE_INFO) -> Self {
         Self {
-            hik,
+            _hik: hik,
             info: DeviceInfo::from_raw(&raw),
             raw,
         }
@@ -246,7 +247,23 @@ impl<'hik> Device<'hik> {
     }
 
     pub fn open(self) -> Result<Camera<'hik>> {
-        self.hik.open_device(&self)
+        let mut handle = ptr::null_mut();
+        check(unsafe { sys::MV_CC_CreateHandle(&mut handle, self.raw()) })?;
+
+        let Some(handle) = NonNull::new(handle.cast()) else {
+            return Err(HikCameraError::NullHandle);
+        };
+
+        if let Err(error) =
+            check(unsafe { sys::MV_CC_OpenDevice(handle.as_ptr(), sys::MV_ACCESS_Exclusive, 0) })
+        {
+            unsafe {
+                sys::MV_CC_DestroyHandle(handle.as_ptr());
+            }
+            return Err(error);
+        }
+
+        Ok(Camera::from_handle(handle))
     }
 
     pub(crate) fn raw(&self) -> &sys::MV_CC_DEVICE_INFO {

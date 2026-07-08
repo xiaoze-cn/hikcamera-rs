@@ -1,0 +1,152 @@
+---
+import { navigation } from '../data/navigation.js'
+
+const { title = 'hikcamera-rs', toc = { zh: [], en: [] }, currentSlug = '' } = Astro.props
+
+const hrefFor = slug => `/${slug ? `${slug}/` : ''}`
+const tocZh = Array.isArray(toc) ? toc : toc.zh
+const tocEn = Array.isArray(toc) ? toc : toc.en
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} - hikcamera-rs</title>
+    <link rel="stylesheet" href="/styles/docs.css" />
+  </head>
+  <body>
+    <header class="site-topbar">
+      <a class="top-brand" href="/">
+        <span>hikcamera-rs</span>
+      </a>
+      <div class="site-search" aria-label="搜索">
+        <span>Search</span>
+        <kbd>Ctrl K</kbd>
+      </div>
+      <nav class="top-nav" aria-label="顶部导航">
+        <button class="nav-control" type="button" data-theme-toggle aria-label="切换深浅背景">
+          <svg class="theme-icon theme-icon-dark" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M15.3 12.7A6.9 6.9 0 0 1 7.2 4.6a.65.65 0 0 0-.8-.8A7.4 7.4 0 1 0 16.1 13.5a.65.65 0 0 0-.8-.8Z"></path>
+          </svg>
+          <svg class="theme-icon theme-icon-light" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M10 5.2a4.8 4.8 0 1 0 0 9.6 4.8 4.8 0 0 0 0-9.6Zm0-3.2a.7.7 0 0 1 .7.7v1a.7.7 0 1 1-1.4 0v-1A.7.7 0 0 1 10 2Zm0 14.6a.7.7 0 0 1 .7.7v1a.7.7 0 1 1-1.4 0v-1a.7.7 0 0 1 .7-.7ZM18 10a.7.7 0 0 1-.7.7h-1a.7.7 0 1 1 0-1.4h1a.7.7 0 0 1 .7.7ZM3.7 10.7h-1a.7.7 0 1 1 0-1.4h1a.7.7 0 1 1 0 1.4Zm11.95-6.35a.7.7 0 0 1 0 .99l-.7.7a.7.7 0 1 1-.99-.99l.7-.7a.7.7 0 0 1 .99 0ZM6.04 13.96a.7.7 0 0 1 0 .99l-.7.7a.7.7 0 1 1-.99-.99l.7-.7a.7.7 0 0 1 .99 0Zm8.91 0 .7.7a.7.7 0 1 1-.99.99l-.7-.7a.7.7 0 1 1 .99-.99ZM5.34 4.35l.7.7a.7.7 0 1 1-.99.99l-.7-.7a.7.7 0 0 1 .99-.99Z"></path>
+          </svg>
+        </button>
+        <button class="nav-control" type="button" data-lang-toggle aria-label="切换语言">
+          <svg class="lang-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill-rule="evenodd" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM5.35 11.25a6.7 6.7 0 0 1 1.62-4.02c.58.36 1.25.66 1.97.88a14.1 14.1 0 0 0-.45 3.14H5.35Zm0 1.5h3.14c.06 1.12.22 2.18.45 3.14-.72.22-1.39.52-1.97.88a6.7 6.7 0 0 1-1.62-4.02Zm2.7 5.09c.38-.22.8-.41 1.27-.57.24.7.53 1.28.86 1.7a7.53 7.53 0 0 1-2.13-1.13Zm2.72-1.02A12.2 12.2 0 0 0 12 16.9c.43 0 .84-.03 1.23-.08C12.82 17.92 12.34 19 12 19s-.82-1.08-1.23-2.18Zm3.91.45c.46.16.89.35 1.27.57a7.53 7.53 0 0 1-2.13 1.13c.33-.42.62-1 .86-1.7Zm2.35-.5a7.2 7.2 0 0 0-1.97-.88c.23-.96.39-2.02.45-3.14h3.14a6.7 6.7 0 0 1-1.62 4.02Zm1.62-5.52h-3.14a14.1 14.1 0 0 0-.45-3.14c.72-.22 1.39-.52 1.97-.88a6.7 6.7 0 0 1 1.62 4.02Zm-2.7-5.09c-.38.22-.8.41-1.27.57a6.45 6.45 0 0 0-.86-1.7 7.53 7.53 0 0 1 2.13 1.13Zm-2.72 1.02c-.39-.05-.8-.08-1.23-.08s-.84.03-1.23.08C11.18 6.08 11.66 5 12 5s.82 1.08 1.23 2.18Zm-3.91-.45a7.2 7.2 0 0 1-1.27-.57 7.53 7.53 0 0 1 2.13-1.13c-.33.42-.62 1-.86 1.7Zm1.02 1.43c.52-.1 1.08-.16 1.66-.16s1.14.06 1.66.16c.18.9.3 1.95.35 3.09h-4.02c.05-1.14.17-2.19.35-3.09Zm-.35 4.59h4.02a12.7 12.7 0 0 1-.35 3.09c-.52.1-1.08.16-1.66.16s-1.14-.06-1.66-.16a12.7 12.7 0 0 1-.35-3.09Z" clip-rule="evenodd"></path>
+          </svg>
+        </button>
+        <a class="github-control" href="https://github.com/xiaoze-cn/hikcamera-rs" aria-label="GitHub">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.63 2.29 6.7 5.47 7.78.4.08.55-.18.55-.4l-.01-1.4c-2.23.5-2.7-1.1-2.7-1.1-.36-.95-.89-1.2-.89-1.2-.73-.51.06-.5.06-.5.8.06 1.23.85 1.23.85.72 1.26 1.88.9 2.34.69.07-.53.28-.9.51-1.1-1.78-.21-3.64-.91-3.64-4.04 0-.9.31-1.62.82-2.2-.08-.2-.36-1.03.08-2.16 0 0 .67-.22 2.2.84A7.4 7.4 0 0 1 8 3.98c.68 0 1.36.09 2 .27 1.52-1.06 2.19-.84 2.19-.84.44 1.13.16 1.96.08 2.16.51.58.82 1.3.82 2.2 0 3.14-1.87 3.83-3.65 4.03.29.26.54.76.54 1.53l-.01 2.26c0 .22.14.48.55.4A8.1 8.1 0 0 0 16 8.2C16 3.67 12.42 0 8 0Z"></path>
+          </svg>
+        </a>
+      </nav>
+    </header>
+    <div class="site-shell">
+      <aside class="site-sidebar">
+        <nav class="site-nav" aria-label="文档导航">
+          {navigation.map(group => (
+            <section class:list={['site-nav-section', !group.items && 'standalone']}>
+              {group.items ? (
+                <>
+                  <p>
+                    <span class="lang-en">{group.label.en}</span>
+                    <span class="lang-zh">{group.label.zh}</span>
+                  </p>
+                  {group.items.map(item => (
+                    <a
+                      href={hrefFor(item.slug)}
+                      class:list={{ active: item.slug === currentSlug }}
+                      aria-current={item.slug === currentSlug ? 'page' : undefined}
+                    >
+                      <span class="lang-en">{item.label.en}</span>
+                      <span class="lang-zh">{item.label.zh}</span>
+                    </a>
+                  ))}
+                </>
+              ) : (
+                <a
+                  href={hrefFor(group.slug)}
+                  class:list={{ active: group.slug === currentSlug }}
+                  aria-current={group.slug === currentSlug ? 'page' : undefined}
+                >
+                  <span class="lang-en">{group.label.en}</span>
+                  <span class="lang-zh">{group.label.zh}</span>
+                </a>
+              )}
+            </section>
+          ))}
+        </nav>
+      </aside>
+      <main class="site-main">
+        <article class="doc-page">
+          <slot />
+        </article>
+      </main>
+      <aside class="site-toc" aria-label="页面目录">
+        {tocZh.length > 0 && (
+          <div class="toc-lang lang-zh">
+            <p>ON THIS PAGE</p>
+            <nav>
+              {tocZh.map(item => (
+                <a
+                  href={`#${item.id}`}
+                  class:list={{ indent: item.depth > 2 }}
+                >
+                  {item.text ?? item.title}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
+        {tocEn.length > 0 && (
+          <div class="toc-lang lang-en">
+            <p>ON THIS PAGE</p>
+            <nav>
+              {tocEn.map(item => (
+                <a
+                  href={`#${item.id}`}
+                  class:list={{ indent: item.depth > 2 }}
+                >
+                  {item.text ?? item.title}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
+      </aside>
+    </div>
+    <script is:inline>
+      (() => {
+        const root = document.documentElement
+        const themeToggle = document.querySelector('[data-theme-toggle]')
+        const langToggle = document.querySelector('[data-lang-toggle]')
+
+        const applyTheme = theme => {
+          root.dataset.theme = theme
+          localStorage.setItem('hikcamera-theme', theme)
+        }
+
+        const applyLang = lang => {
+          root.lang = lang === 'en' ? 'en' : 'zh-CN'
+          localStorage.setItem('hikcamera-lang', lang)
+        }
+
+        applyTheme(localStorage.getItem('hikcamera-theme') || 'light')
+        applyLang(localStorage.getItem('hikcamera-lang') || 'zh')
+
+        themeToggle.addEventListener('click', () => {
+          applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark')
+        })
+
+        langToggle.addEventListener('click', () => {
+          applyLang(root.lang === 'en' ? 'zh' : 'en')
+        })
+      })()
+    </script>
+  </body>
+</html>
