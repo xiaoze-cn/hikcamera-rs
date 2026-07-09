@@ -20,6 +20,8 @@ export LIBCLANG_PATH := libclang_path
 export PATH := pixi_bin + separator + libclang_dir + separator + env("PATH")
 export LD_LIBRARY_PATH := libclang_dir + ":" + env("LD_LIBRARY_PATH", "")
 export DYLD_LIBRARY_PATH := libclang_dir + ":" + env("DYLD_LIBRARY_PATH", "")
+export GENICAM_GENTL64_PATH := if system == "windows" { pixi_bin } else { env("GENICAM_GENTL64_PATH", "") }
+export GENICAM_GENTL32_PATH := if system == "windows" { "" } else { env("GENICAM_GENTL32_PATH", "") }
 
 _default:
     @just --unsorted --list
@@ -49,6 +51,10 @@ clean:
 [group('Examples')]
 build-examples: _libclang
     cargo build --workspace --examples
+
+[group('Examples')]
+example package name: _libclang
+    cargo run -p "{{ package }}" --example "{{ name }}"
 
 [group('Environment')]
 env-check: _libclang

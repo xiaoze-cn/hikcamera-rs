@@ -14,6 +14,11 @@
   - 面向封装层和需要直接访问 C SDK 的高级用户
   - 通过 `bindgen` 从海康 MVS 头文件生成原始绑定
 
+- `hikcamera-studio`
+  - 应用层辅助工具 crate
+  - 面向现场调试、显示、标定等非 SDK 原生工作流
+  - 当前包含 `show`，用于把已有 `Stream` 显示到轻量窗口
+
 - `hikcamera-mvs`
   - pixi/conda 包中的海康 MVS SDK 文件
   - 提供头文件、import library 和运行时 DLL
@@ -41,6 +46,10 @@
   - 文档：`site/content/hikcamera/camera.md`
   - 打开后的相机、采集流、帧数据、图像处理、图片写入和视频写入
 
+- `crates/hikcamera-studio/src/show.rs`
+  - 文档：`docs/hikcamera-studio/show.md`
+  - 基于已有 `Stream` 的实时画面显示入口
+
 - `crates/hikcamera-sys/`
   - 文档：`site/content/hikcamera-sys/index.md`
   - 原始 FFI 绑定、`bindgen` 构建流程和状态码生成
@@ -60,6 +69,9 @@
   - `error.md`
   - `device.md`
   - `camera.md`
+
+- 使用应用层辅助能力时看 `docs/hikcamera-studio/`
+  - `show.md`
 
 - 需要理解 FFI 或构建细节时看 `site/content/hikcamera-sys/index.md`
 

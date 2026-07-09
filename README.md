@@ -88,6 +88,13 @@ hikcamera-rs/
     │       ├── device.rs
     │       ├── error.rs
     │       └── system.rs
+    ├── hikcamera-studio/
+    │   ├── Cargo.toml
+    │   ├── examples/
+    │   │   └── show.rs
+    │   └── src/
+    │       ├── lib.rs
+    │       └── show.rs
     └── hikcamera-sys/
         ├── Cargo.toml
         ├── build.rs

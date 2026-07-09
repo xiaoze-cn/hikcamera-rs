@@ -16,6 +16,12 @@ const navigation = [
     ]
   },
   {
+    label: { en: 'hikcamera-studio', zh: 'hikcamera-studio' },
+    items: [
+      { slug: 'hikcamera-studio/show', label: { en: 'Show', zh: '显示窗口' } }
+    ]
+  },
+  {
     slug: 'hikcamera-sys',
     label: { en: 'hikcamera-sys', zh: 'hikcamera-sys' }
   },
