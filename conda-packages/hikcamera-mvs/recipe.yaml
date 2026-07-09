@@ -6,15 +6,13 @@ source:
   path: sources/5.0.1-20260512
 
 build:
-  number: 0
-  string: 20260512_0
+  number: 1
+  string: 20260512_1
   script:
     - if not exist "%PREFIX%\\Library\\bin" mkdir "%PREFIX%\\Library\\bin"
     - if not exist "%PREFIX%\\Library\\include\\hikcamera-mvs" mkdir "%PREFIX%\\Library\\include\\hikcamera-mvs"
     - if not exist "%PREFIX%\\Library\\lib" mkdir "%PREFIX%\\Library\\lib"
-    - copy /Y "%SRC_DIR%\\win64\\bin\\*.dll" "%PREFIX%\\Library\\bin\\"
-    - copy /Y "%SRC_DIR%\\win64\\bin\\*.cti" "%PREFIX%\\Library\\bin\\"
-    - copy /Y "%SRC_DIR%\\win64\\bin\\*.ini" "%PREFIX%\\Library\\bin\\"
+    - xcopy /E /I /Y "%SRC_DIR%\\win64\\bin\\*" "%PREFIX%\\Library\\bin\\"
     - copy /Y "%SRC_DIR%\\include\\*.h" "%PREFIX%\\Library\\include\\hikcamera-mvs\\"
     - copy /Y "%SRC_DIR%\\win64\\lib\\*.lib" "%PREFIX%\\Library\\lib\\"
 
@@ -28,6 +26,8 @@ tests:
       - if not exist "%PREFIX%\\Library\\bin\\MvCameraControl.dll" exit 1
       - if not exist "%PREFIX%\\Library\\bin\\MvProducerU3V.cti" exit 1
       - if not exist "%PREFIX%\\Library\\bin\\MvUsb3vTL.dll" exit 1
+      - if not exist "%PREFIX%\\Library\\bin\\FormatConversion.dll" exit 1
+      - if not exist "%PREFIX%\\Library\\bin\\SuperRender.dll" exit 1
       - if not exist "%PREFIX%\\Library\\include\\hikcamera-mvs\\MvCameraControl.h" exit 1
       - if not exist "%PREFIX%\\Library\\lib\\MvCameraControl.lib" exit 1
 
