@@ -57,50 +57,52 @@ fn main() -> hikcamera::Result<()> {
 
 ```text
 hikcamera-rs/
-├── Cargo.toml
-├── Cargo.lock
-├── README.md
-├── justfile
-├── pixi.toml
-├── scripts/
-│   ├── check_env.py
-│   └── env/
-│       └── win_dll.toml
+├── .pixi/
 ├── conda-packages/
 │   └── hikcamera-mvs/
 │       ├── recipe.yaml
 │       └── sources/
+├── crates/
+│   ├── hikcamera-sys/
+│   │   ├── Cargo.toml
+│   │   ├── build.rs
+│   │   ├── tests/
+│   │   │   └── bindings.rs
+│   │   └── wrapper.h
+│   └── hikcamera/
+│       ├── Cargo.toml
+│       ├── examples/
+│       │   ├── camera.rs
+│       │   ├── device.rs
+│       │   ├── show.rs
+│       │   └── system.rs
+│       └── src/
+│           ├── lib.rs
+│           ├── camera.rs
+│           ├── device.rs
+│           ├── error.rs
+│           ├── show.rs
+│           └── system.rs
 ├── docs/
+│   ├── hikcamera/
+│   ├── hikcamera-sys/
+│   └── index.md
+├── scripts/
+│   ├── check.py
+│   └── check.toml
 ├── site/
 │   ├── src/
 │   ├── public/
 │   └── justfile
-└── crates/
-    ├── hikcamera/
-    │   ├── Cargo.toml
-    │   ├── examples/
-    │   │   ├── camera.rs
-    │   │   ├── device.rs
-    │   │   └── system.rs
-    │   └── src/
-    │       ├── lib.rs
-    │       ├── camera.rs
-    │       ├── device.rs
-    │       ├── error.rs
-    │       └── system.rs
-    ├── hikcamera-studio/
-    │   ├── Cargo.toml
-    │   ├── examples/
-    │   │   └── show.rs
-    │   └── src/
-    │       ├── lib.rs
-    │       └── show.rs
-    └── hikcamera-sys/
-        ├── Cargo.toml
-        ├── build.rs
-        ├── tests/
-        │   └── bindings.rs
-        └── wrapper.h
+├── target/
+├── .gitignore
+├── .gitattributes
+├── README.md
+├── LICENSE
+├── Cargo.toml
+├── pixi.toml
+├── justfile
+└── lefthook.yml
 ```
 
 ## 协议

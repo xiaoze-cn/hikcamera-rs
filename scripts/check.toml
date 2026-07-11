@@ -1,0 +1,92 @@
+[commit]
+pattern = '''[a-z][a-z0-9-]*(\([a-z0-9._/-]+\))?!?: .+'''
+
+[docs]
+docs_dir = "docs"
+site_pages = "site/src/data/pages.js"
+reference_pattern = '''readDoc\(['"]([^'"]+)['"]\)'''
+ignore_unreferenced = [
+  "index.md",
+  "hikcamera-sys/c-sdk/**",
+]
+
+[env]
+objdump_names = ["llvm-objdump", "llvm-objdump.exe"]
+objdump_fallbacks = [
+  ".pixi/envs/default/Library/bin/llvm-objdump.exe",
+  ".pixi/envs/default/bin/llvm-objdump",
+]
+
+[win]
+system_libs = [
+  "ADVAPI32.dll",
+  "COMCTL32.dll",
+  "COMDLG32.dll",
+  "D3D11.dll",
+  "DBGHELP.dll",
+  "DXGI.dll",
+  "GDI32.dll",
+  "IPHLPAPI.dll",
+  "KERNEL32.dll",
+  "OLE32.dll",
+  "OLEAUT32.dll",
+  "PSAPI.dll",
+  "RPCRT4.dll",
+  "SETUPAPI.dll",
+  "SHELL32.dll",
+  "USER32.dll",
+  "VERSION.dll",
+  "WINMM.dll",
+  "WSOCK32.dll",
+  "WS2_32.dll",
+]
+
+[[runtime_profiles]]
+name = "hikcamera-win32"
+arch_dir = "conda-packages/hikcamera-mvs/sources/5.0.1-20260512/win32/bin"
+entries = ["MvCameraControl.dll", "MvISPControl.dll"]
+system_libs = "win"
+
+[[runtime_profiles]]
+name = "hikcamera-win64"
+arch_dir = "conda-packages/hikcamera-mvs/sources/5.0.1-20260512/win64/bin"
+entries = [
+  "FormatConversion.dll",
+  "MVFGControl.dll",
+  "MVGigEVisionSDK.dll",
+  "MvCameraControl.dll",
+  "MvFGProducerCML.cti",
+  "MvFGProducerCXP.cti",
+  "MvFGProducerGEV.cti",
+  "MvFGProducerXoF.cti",
+  "MvISPControl.dll",
+  "MvLCProducer.dll",
+  "MvProducerGEV.cti",
+  "MvProducerU3V.cti",
+  "MvProducerVIR.dll",
+  "MvRender.dll",
+  "MvUsb3vTL.dll",
+  "SuperRender.dll",
+]
+system_libs = "win"
+
+[package]
+root = "conda-packages/hikcamera-mvs"
+recipe = "recipe.yaml"
+required_source_files = [
+  "VERSION.txt",
+  "include/CameraParams.h",
+  "include/MvCameraControl.h",
+  "include/MvErrorDefine.h",
+  "include/PixelType.h",
+  "win32/bin/MvCameraControl.dll",
+  "win32/bin/MvISPControl.dll",
+  "win32/lib/MvCameraControl.lib",
+  "win64/bin/FormatConversion.dll",
+  "win64/bin/MvCameraControl.dll",
+  "win64/bin/MvISPControl.dll",
+  "win64/bin/MvProducerU3V.cti",
+  "win64/bin/MvUsb3vTL.dll",
+  "win64/bin/SuperRender.dll",
+  "win64/lib/MvCameraControl.lib",
+]

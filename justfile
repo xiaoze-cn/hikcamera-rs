@@ -58,11 +58,23 @@ example package name: _libclang
 
 [group('Environment')]
 env-check: _libclang
-    python scripts/check_env.py runtime
+    python scripts/check.py env
 
 [group('Verify')]
 fmt-check:
     cargo fmt --all -- --check
+
+[group('Verify')]
+docs-check:
+    python scripts/check.py docs
+
+[group('Verify')]
+package-check:
+    python scripts/check.py package
+
+[group('Verify')]
+commit-msg file:
+    python scripts/check.py commit-msg "{{ file }}"
 
 [group('Verify')]
 pre-commit: fmt-check check

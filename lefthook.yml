@@ -2,3 +2,8 @@ pre-commit:
   commands:
     pre-commit:
       run: just pre-commit
+
+commit-msg:
+  commands:
+    commit-message:
+      run: just commit-msg "{1}"
