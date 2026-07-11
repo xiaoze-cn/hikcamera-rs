@@ -15,11 +15,8 @@ const hikcameraDocs = {
   system: readDoc('hikcamera/system.md'),
   device: readDoc('hikcamera/device.md'),
   camera: readDoc('hikcamera/camera.md'),
+  show: readDoc('hikcamera/show.md'),
   error: readDoc('hikcamera/error.md')
-}
-
-const hikcameraStudioDocs = {
-  show: readDoc('hikcamera-studio/show.md')
 }
 
 const hikcameraSysDocs = {
@@ -201,9 +198,9 @@ const body = {
     zh: docPage('错误处理', hikcameraDocs.error),
     en: docPage('Error Handling', hikcameraDocs.error)
   },
-  'hikcamera-studio/show': {
-    zh: docPage('显示窗口', hikcameraStudioDocs.show),
-    en: docPage('Show', hikcameraStudioDocs.show)
+  'hikcamera/show': {
+    zh: docPage('显示窗口', hikcameraDocs.show),
+    en: docPage('Show', hikcameraDocs.show)
   },
   'hikcamera-sys': {
     zh: docPage('hikcamera-sys', hikcameraSysDocs.index),

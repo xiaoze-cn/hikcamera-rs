@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "crates/hikcamera",
-    "crates/hikcamera-studio",
     "crates/hikcamera-sys",
 ]
 resolver = "3"

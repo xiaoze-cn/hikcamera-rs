@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use hikcamera::Stream;
+use crate::Stream;
 
 pub const DEFAULT_TITLE: &str = "HikCamera Show";
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(1);
@@ -8,7 +8,7 @@ pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(1);
 const DEFAULT_WIDTH: i32 = 1000;
 const DEFAULT_HEIGHT: i32 = 750;
 
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type ShowResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug, Clone)]
 pub struct ShowOptions {
@@ -27,18 +27,18 @@ pub struct StreamShow<'hik> {
 pub trait ShowExt<'hik>: Sized {
     type Show;
 
-    fn show(self) -> Result<Self::Show>;
-    fn show_with(self, options: ShowOptions) -> Result<Self::Show>;
+    fn show(self) -> ShowResult<Self::Show>;
+    fn show_with(self, options: ShowOptions) -> ShowResult<Self::Show>;
 }
 
 impl<'hik> ShowExt<'hik> for Stream<'hik> {
     type Show = StreamShow<'hik>;
 
-    fn show(self) -> Result<Self::Show> {
+    fn show(self) -> ShowResult<Self::Show> {
         self.show_with(ShowOptions::default())
     }
 
-    fn show_with(self, options: ShowOptions) -> Result<Self::Show> {
+    fn show_with(self, options: ShowOptions) -> ShowResult<Self::Show> {
         Ok(StreamShow {
             stream: self,
             options,
@@ -47,7 +47,7 @@ impl<'hik> ShowExt<'hik> for Stream<'hik> {
 }
 
 impl<'hik> StreamShow<'hik> {
-    pub fn run(self) -> Result<Stream<'hik>> {
+    pub fn run(self) -> ShowResult<Stream<'hik>> {
         run_show(self.stream, self.options)
     }
 }
@@ -86,20 +86,20 @@ impl Default for ShowOptions {
 }
 
 #[cfg(windows)]
-fn run_show(stream: Stream<'_>, options: ShowOptions) -> Result<Stream<'_>> {
+fn run_show(stream: Stream<'_>, options: ShowOptions) -> ShowResult<Stream<'_>> {
     windows::run_show(stream, options)
 }
 
 #[cfg(not(windows))]
-fn run_show(stream: Stream<'_>, _options: ShowOptions) -> Result<Stream<'_>> {
-    Err("hikcamera-studio show is only implemented on Windows".into())
+fn run_show(stream: Stream<'_>, _options: ShowOptions) -> ShowResult<Stream<'_>> {
+    Err("hikcamera show is only implemented on Windows".into())
 }
 
 #[cfg(windows)]
 mod windows {
     use std::ptr;
 
-    use hikcamera::{Frame, HikCameraError, Status, Stream, sys};
+    use crate::{Frame, HikCameraError, Status, Stream, sys};
     use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
     use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::VK_ESCAPE;
@@ -110,13 +110,13 @@ mod windows {
         WS_OVERLAPPEDWINDOW, WS_VISIBLE,
     };
 
-    use super::{Result, ShowOptions};
+    use super::{ShowOptions, ShowResult};
 
     const RENDER_MODE_GDI: u32 = 0;
     const RENDER_MODE_D3D: u32 = 1;
     const PIXEL_BGR8: u32 = sys::MvGvspPixelType_PixelType_Gvsp_BGR8_Packed as u32;
 
-    pub(super) fn run_show(mut stream: Stream<'_>, options: ShowOptions) -> Result<Stream<'_>> {
+    pub(super) fn run_show(mut stream: Stream<'_>, options: ShowOptions) -> ShowResult<Stream<'_>> {
         let window = Window::new(&options.title, options.width, options.height)?;
         let mut choice: Option<DisplayChoice> = Option::None;
 
@@ -149,7 +149,7 @@ mod windows {
         Ok(stream)
     }
 
-    fn select_path(stream: &Stream<'_>, hwnd: HWND, frame: &Frame) -> Result<DisplayChoice> {
+    fn select_path(stream: &Stream<'_>, hwnd: HWND, frame: &Frame) -> ShowResult<DisplayChoice> {
         let candidates = [
             DisplayChoice {
                 source: DisplaySource::Raw,
@@ -250,7 +250,7 @@ mod windows {
     }
 
     impl Window {
-        fn new(title: &str, width: i32, height: i32) -> Result<Self> {
+        fn new(title: &str, width: i32, height: i32) -> ShowResult<Self> {
             let class_name = wide("HikCameraStudioShowWindow");
             let title = wide(title);
             let instance = unsafe { GetModuleHandleW(ptr::null()) };

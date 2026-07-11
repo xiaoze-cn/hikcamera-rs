@@ -12,13 +12,8 @@ const navigation = [
       { slug: 'hikcamera/lifecycle', label: { en: 'Lifecycle', zh: '生命周期' } },
       { slug: 'hikcamera/devices', label: { en: 'Devices', zh: '设备信息' } },
       { slug: 'hikcamera/camera', label: { en: 'Camera', zh: '相机控制' } },
+      { slug: 'hikcamera/show', label: { en: 'Show', zh: '显示窗口' } },
       { slug: 'hikcamera/errors', label: { en: 'Error Handling', zh: '错误处理' } }
-    ]
-  },
-  {
-    label: { en: 'hikcamera-studio', zh: 'hikcamera-studio' },
-    items: [
-      { slug: 'hikcamera-studio/show', label: { en: 'Show', zh: '显示窗口' } }
     ]
   },
   {

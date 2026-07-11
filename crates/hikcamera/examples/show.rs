@@ -1,7 +1,6 @@
-use hikcamera::HikCamera;
-use hikcamera_studio::{ShowExt, ShowOptions};
+use hikcamera::{HikCamera, ShowExt, ShowOptions};
 
-fn main() -> hikcamera_studio::Result<()> {
+fn main() -> hikcamera::ShowResult<()> {
     let hik = HikCamera::new()?;
     let mut camera = hik.devices()?.default()?.open()?;
 
