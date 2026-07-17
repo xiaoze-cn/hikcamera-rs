@@ -1,7 +1,5 @@
-# Default text handling
 * text=auto
 
-# Source and config files use LF
 *.rs text eol=lf
 *.toml text eol=lf
 *.lock text eol=lf
@@ -18,7 +16,6 @@
 justfile text eol=lf
 LICENSE text eol=lf
 
-# SDK/runtime artifacts are binary
 *.dll binary
 *.lib binary
 *.ax binary

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::Stream;
+use crate::{Frame, Stream};
 
 pub const DEFAULT_TITLE: &str = "HikCamera Show";
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(1);
@@ -16,12 +16,20 @@ pub struct ShowOptions {
     width: i32,
     height: i32,
     timeout: Duration,
+    activate: bool,
 }
 
 #[derive(Debug)]
 pub struct StreamShow<'hik> {
     stream: Stream<'hik>,
     options: ShowOptions,
+}
+
+#[derive(Debug)]
+pub struct Preview {
+    options: ShowOptions,
+    #[cfg(windows)]
+    inner: windows::Preview,
 }
 
 pub trait ShowExt<'hik>: Sized {
@@ -72,6 +80,11 @@ impl ShowOptions {
         self.timeout = timeout;
         self
     }
+
+    pub fn activate(mut self, activate: bool) -> Self {
+        self.activate = activate;
+        self
+    }
 }
 
 impl Default for ShowOptions {
@@ -81,7 +94,51 @@ impl Default for ShowOptions {
             width: DEFAULT_WIDTH,
             height: DEFAULT_HEIGHT,
             timeout: DEFAULT_TIMEOUT,
+            activate: true,
         }
+    }
+}
+
+impl Preview {
+    #[cfg(windows)]
+    pub fn open(options: ShowOptions) -> ShowResult<Self> {
+        let inner = windows::Preview::open(&options)?;
+        Ok(Self { options, inner })
+    }
+
+    #[cfg(not(windows))]
+    pub fn open(_options: ShowOptions) -> ShowResult<Self> {
+        Err("hikcamera preview is only implemented on Windows".into())
+    }
+
+    #[cfg(windows)]
+    pub fn is_open(&self) -> bool {
+        self.inner.is_open()
+    }
+
+    #[cfg(not(windows))]
+    pub fn is_open(&self) -> bool {
+        false
+    }
+
+    #[cfg(windows)]
+    pub fn show(&mut self, stream: &Stream<'_>, frame: &Frame) -> ShowResult<()> {
+        self.inner.show(stream, frame)
+    }
+
+    #[cfg(not(windows))]
+    pub fn show(&mut self, _stream: &Stream<'_>, _frame: &Frame) -> ShowResult<()> {
+        Err("hikcamera preview is only implemented on Windows".into())
+    }
+
+    #[cfg(windows)]
+    pub fn reopen(&mut self) -> ShowResult<()> {
+        self.inner.reopen(&self.options)
+    }
+
+    #[cfg(not(windows))]
+    pub fn reopen(&mut self) -> ShowResult<()> {
+        Err("hikcamera preview is only implemented on Windows".into())
     }
 }
 
@@ -105,8 +162,9 @@ mod windows {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::VK_ESCAPE;
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, CreateWindowExW, DefWindowProcW, DestroyWindow,
-        DispatchMessageW, IDC_ARROW, IsWindow, LoadCursorW, MSG, PM_REMOVE, PeekMessageW,
-        RegisterClassW, TranslateMessage, WM_DESTROY, WM_KEYDOWN, WM_QUIT, WNDCLASSW,
+        DispatchMessageW, HWND_TOP, IDC_ARROW, IsWindow, LoadCursorW, MSG, PM_REMOVE, PeekMessageW,
+        RegisterClassW, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW, SetWindowPos,
+        TranslateMessage, WM_DESTROY, WM_KEYDOWN, WM_QUIT, WNDCLASSW, WS_EX_NOACTIVATE,
         WS_OVERLAPPEDWINDOW, WS_VISIBLE,
     };
 
@@ -117,36 +175,86 @@ mod windows {
     const PIXEL_BGR8: u32 = sys::MvGvspPixelType_PixelType_Gvsp_BGR8_Packed as u32;
 
     pub(super) fn run_show(mut stream: Stream<'_>, options: ShowOptions) -> ShowResult<Stream<'_>> {
-        let window = Window::new(&options.title, options.width, options.height)?;
-        let mut choice: Option<DisplayChoice> = Option::None;
+        let timeout = options.timeout;
+        let mut preview = Preview::open(&options)?;
 
-        while window.is_open() {
-            let frame = stream.take_frame(options.timeout)?;
+        while preview.is_open() {
+            let frame = stream.take_frame(timeout)?;
+            preview.show(&stream, &frame)?;
+        }
 
-            let selected = match choice {
+        Ok(stream)
+    }
+
+    #[derive(Debug)]
+    pub(super) struct Preview {
+        window: Window,
+        choice: Option<DisplayChoice>,
+    }
+
+    impl Preview {
+        pub(super) fn open(options: &ShowOptions) -> ShowResult<Self> {
+            Ok(Self {
+                window: Window::new(
+                    &options.title,
+                    options.width,
+                    options.height,
+                    options.activate,
+                )?,
+                choice: Option::None,
+            })
+        }
+
+        pub(super) fn is_open(&self) -> bool {
+            self.window.is_open()
+        }
+
+        pub(super) fn show(&mut self, stream: &Stream<'_>, frame: &Frame) -> ShowResult<()> {
+            self.window.pump_messages();
+            if !self.window.is_open() {
+                return Ok(());
+            }
+
+            let selected = match self.choice {
                 Option::Some(choice) => choice,
                 Option::None => {
-                    let selected = select_path(&stream, window.hwnd, &frame)?;
-                    choice = Option::Some(selected);
+                    let selected = select_path(stream, self.window.hwnd, frame)?;
+                    self.choice = Option::Some(selected);
                     selected
                 }
             };
 
             let converted;
             let display_frame = match selected.source {
-                DisplaySource::Raw => &frame,
+                DisplaySource::Raw => frame,
                 DisplaySource::Bgr8 => {
-                    converted = stream.convert_frame(&frame, PIXEL_BGR8)?;
+                    converted = stream.convert_frame(frame, PIXEL_BGR8)?;
                     &converted
                 }
             };
 
-            show_frame(&stream, window.hwnd, display_frame, selected.render_mode)?;
-
-            window.pump_messages();
+            show_frame(
+                stream,
+                self.window.hwnd,
+                display_frame,
+                selected.render_mode,
+            )?;
+            self.window.pump_messages();
+            Ok(())
         }
 
-        Ok(stream)
+        pub(super) fn reopen(&mut self, options: &ShowOptions) -> ShowResult<()> {
+            if !self.window.is_open() {
+                self.window = Window::new(
+                    &options.title,
+                    options.width,
+                    options.height,
+                    options.activate,
+                )?;
+                self.choice = Option::None;
+            }
+            Ok(())
+        }
     }
 
     fn select_path(stream: &Stream<'_>, hwnd: HWND, frame: &Frame) -> ShowResult<DisplayChoice> {
@@ -245,12 +353,13 @@ mod windows {
         Bgr8,
     }
 
+    #[derive(Debug)]
     struct Window {
         hwnd: HWND,
     }
 
     impl Window {
-        fn new(title: &str, width: i32, height: i32) -> ShowResult<Self> {
+        fn new(title: &str, width: i32, height: i32, activate: bool) -> ShowResult<Self> {
             let class_name = wide("HikCameraStudioShowWindow");
             let title = wide(title);
             let instance = unsafe { GetModuleHandleW(ptr::null()) };
@@ -274,7 +383,7 @@ mod windows {
 
             let hwnd = unsafe {
                 CreateWindowExW(
-                    0,
+                    if activate { 0 } else { WS_EX_NOACTIVATE },
                     class_name.as_ptr(),
                     title.as_ptr(),
                     WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -290,6 +399,24 @@ mod windows {
             };
             if hwnd.is_null() {
                 return Err("failed to create Win32 window".into());
+            }
+            if !activate
+                && unsafe {
+                    SetWindowPos(
+                        hwnd,
+                        HWND_TOP,
+                        0,
+                        0,
+                        0,
+                        0,
+                        SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW,
+                    )
+                } == 0
+            {
+                unsafe {
+                    DestroyWindow(hwnd);
+                }
+                return Err("failed to show Win32 window".into());
             }
 
             Ok(Self { hwnd })

@@ -10,7 +10,7 @@ HikCamera MVS 相机 SDK 的 Rust 封装
 
 ```toml
 [dependencies]
-hikcamera = { git = "https://github.com/xiaoze-cn/hikcamera-rs.git" }
+hikcamera = { git = "https://github.com/xiaoze-cn/HikCamera-rs.git" }
 ```
 
 ## 示例
@@ -104,6 +104,18 @@ hikcamera-rs/
 ├── justfile
 └── lefthook.yml
 ```
+
+## Conda 包发布位置
+
+`conda-packages/` 是 HikCamera MVS Conda 包的唯一源头，其中的 recipe 与 SDK 源文件从当前仓库读取。构建后的 `.conda` 包应放入下列 Channel 仓库的对应平台目录，并更新 `repodata.json`：
+
+```text
+C:\Projects\Integrations\HikCamera\conda-packages
+    -> C:\Projects\Distributions\Conda Channel\win-64
+    -> https://github.com/xiaoze-cn/Conda-Channel
+```
+
+如果 Channel 仓库目录变更，应同步更新其 `README.md` 和 `index.html`；本项目内的构建和检查配置均使用相对路径，无需修改。
 
 ## 协议
 

@@ -6,7 +6,7 @@
 
 ```toml
 [dependencies]
-hikcamera = { git = "https://github.com/xiaoze-cn/hikcamera-rs.git" }
+hikcamera = { git = "https://github.com/xiaoze-cn/HikCamera-rs.git" }
 ```
 
 ## 示例

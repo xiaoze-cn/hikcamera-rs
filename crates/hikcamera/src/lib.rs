@@ -14,5 +14,7 @@ pub use camera::{
 pub use device::{Device, DeviceInfo, Devices, Transport};
 pub use error::{HikCameraError, Result, Status, StatusInfo};
 pub use hikcamera_sys as sys;
-pub use show::{DEFAULT_TIMEOUT, DEFAULT_TITLE, ShowExt, ShowOptions, ShowResult, StreamShow};
+pub use show::{
+    DEFAULT_TIMEOUT, DEFAULT_TITLE, Preview, ShowExt, ShowOptions, ShowResult, StreamShow,
+};
 pub use system::{HikCamera, HikVersion};
