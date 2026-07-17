@@ -112,7 +112,7 @@ hikcamera-rs/
 ```text
 C:\Projects\Integrations\HikCamera\conda-packages
     -> C:\Projects\Distributions\Conda Channel\win-64
-    -> https://github.com/xiaoze-cn/Conda-Channel
+    -> https://github.com/xiaoze-cn/Conda-Packages
 ```
 
 如果 Channel 仓库目录变更，应同步更新其 `README.md` 和 `index.html`；本项目内的构建和检查配置均使用相对路径，无需修改。

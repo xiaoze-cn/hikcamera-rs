@@ -1,6 +1,6 @@
 [workspace]
 name = "hikcamera-rs"
-channels = ["https://xiaoze-cn.github.io/conda-channel", "conda-forge"]
+channels = ["https://xiaoze-cn.github.io/Conda-Packages", "conda-forge"]
 platforms = ["win-64", "linux-64"]
 
 [dependencies]
