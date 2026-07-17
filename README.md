@@ -111,7 +111,7 @@ hikcamera-rs/
 
 ```text
 C:\Projects\Integrations\HikCamera\conda-packages
-    -> C:\Projects\Distributions\Conda Channel\win-64
+    -> C:\Projects\Distributions\Conda Packages\win-64
     -> https://github.com/xiaoze-cn/Conda-Packages
 ```
 
